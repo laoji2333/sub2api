@@ -1,0 +1,3 @@
+services:
+  sub2api:
+    image: ghcr.io/laoji2333/sub2api:${SUB2API_IMAGE_TAG:?SUB2API_IMAGE_TAG must be an immutable sha-* tag}
