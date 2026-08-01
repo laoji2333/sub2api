@@ -153,6 +153,7 @@ export default {
     dashboard: 'Dashboard',
     announcements: 'Announcements',
     apiKeys: 'API Keys',
+    codexGuide: 'Codex Setup',
     batchImage: 'Batch Images',
     usage: 'Usage',
     redeem: 'Redeem',

@@ -216,6 +216,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/codex',
+    name: 'CodexGuide',
+    component: () => import('@/views/user/CodexGuideView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Codex Setup',
+      titleKey: 'codexGuide.title',
+      descriptionKey: 'codexGuide.description'
+    }
+  },
+  {
     path: '/batch-image',
     name: 'BatchImageGuide',
     alias: '/docs/batch-image',

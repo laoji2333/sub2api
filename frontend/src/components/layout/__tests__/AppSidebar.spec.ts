@@ -19,6 +19,19 @@ describe('AppSidebar custom SVG styles', () => {
   })
 })
 
+describe('AppSidebar Codex navigation', () => {
+  it('places the Codex guide directly after the profile entry', () => {
+    const profileEntry = "{ path: '/profile', label: t('nav.profile'), icon: UserIcon }"
+    const codexEntry = "{ path: '/codex', label: t('nav.codexGuide'), icon: TerminalIcon }"
+    const profileIndex = componentSource.indexOf(profileEntry)
+    const codexIndex = componentSource.indexOf(codexEntry)
+
+    expect(profileIndex).toBeGreaterThan(-1)
+    expect(codexIndex).toBeGreaterThan(profileIndex)
+    expect(componentSource.slice(profileIndex + profileEntry.length, codexIndex)).not.toContain('{ path:')
+  })
+})
+
 describe('AppSidebar scroll position persistence', () => {
   it('binds a template ref to the sidebar nav element', () => {
     expect(componentSource).toContain('ref="sidebarNavRef"')
