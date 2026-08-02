@@ -16,8 +16,8 @@ This directory contains files for deploying Sub2API on Linux servers and Apple-s
 |------|-------------|
 | `docker-compose.yml` | Docker Compose configuration (named volumes) |
 | `docker-compose.local.yml` | Docker Compose configuration (local directories, easy migration) |
-| `docker-compose.prod.yml` | CVAPI fork image override with an immutable GHCR tag |
-| `CVAPI_DEPLOY_CN.md` | CVAPI fork deployment, update, backup, and rollback guide |
+| `docker-compose.prod.yml` | CVAPI production override: immutable GHCR image, Railway PostgreSQL, local Redis |
+| `CVAPI_DEPLOY_CN.md` | CVAPI production, Railway PostgreSQL, update, backup, and rollback guide |
 | `docker-deploy.sh` | **One-click Docker deployment script (recommended)** |
 | `apple-container.sh` | Native Apple `container` lifecycle script |
 | `APPLE_CONTAINER.md` | Apple `container` deployment and operations guide |

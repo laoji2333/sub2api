@@ -7,12 +7,32 @@ GitHub Actions 构建并发布到：
 ghcr.io/laoji2333/sub2api
 ```
 
-生产环境使用不可变的 `sha-*` 标签，不使用会移动的 `main` 标签。基础服务仍由
-`docker-compose.local.yml` 管理，`docker-compose.prod.yml` 只覆盖 Sub2API 应用镜像，
-不会改变 PostgreSQL、Redis、数据目录或端口配置。
+生产环境使用不可变的 `sha-*` 标签，不使用会移动的 `main` 标签。
+目标架构为：
+
+- PostgreSQL：Railway 公网 TCP Proxy，强制 SSL；
+- Redis：部署服务器上的本地 `sub2api-redis`；
+- 应用：`ghcr.io/laoji2333/sub2api` 的不可变镜像；
+- 旧本地 PostgreSQL：保留服务定义和数据，但默认不启动。
+
+`docker-compose.prod.yml` 要放在 `docker-compose.yml` 或 `docker-compose.local.yml`
+之后合并；它同时覆盖应用镜像、PostgreSQL 连接和启动依赖，并保持 Redis 为本地服务。
+
+本文示例使用 `docker-compose.local.yml`。如果现有服务器使用命名卷版
+`docker-compose.yml`，将命令中的第一个 Compose 文件替换为它即可。
 
 当前镜像工作流只构建 `linux/amd64`。部署前执行 `uname -m`，预期结果为
 `x86_64`；ARM 服务器需要先扩展镜像工作流。
+
+`docker-compose.prod.yml` 使用 Compose 官方的 `!override` 标签移除应用对本地
+PostgreSQL 健康检查的依赖，因此需要 Docker Compose 2.24.4 或更高版本：
+
+```bash
+docker compose version
+```
+
+在 Railway PostgreSQL 服务中启用 Public Networking，使用它提供的 TCP Proxy
+主机和端口。不要把 `DATABASE_PUBLIC_URL`、密码或 `.env` 提交到 Git。
 
 ## 一、新服务器首次部署
 
@@ -34,7 +54,8 @@ cd /opt/sub2api/deploy
 
 ### 3. 创建生产配置
 
-下面的命令在服务器内部生成随机密钥，不会把密钥打印到终端。管理员初始密码仅写入
+下面的命令会交互式读取 Railway 的拆分连接字段，数据库密码输入时不显示；
+同时在服务器内部生成 Redis、JWT、TOTP 和管理员密钥。管理员初始密码仅写入
 `/root/sub2api-initial-admin.txt`，不要把该文件内容发送到聊天、日志或代码仓库。
 
 ```bash
@@ -51,10 +72,23 @@ cd /opt/sub2api/deploy
   test -n "$admin_email"
   printf '%s\n' "$admin_email" | grep -Eq '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
 
+  read -r -p "Railway DATABASE_HOST: " database_host
+  read -r -p "Railway DATABASE_PORT: " database_port
+  read -r -p "Railway DATABASE_USER: " database_user
+  read -r -p "Railway DATABASE_DBNAME: " database_name
+  read -r -s -p "Railway DATABASE_PASSWORD: " database_password
+  printf '\n'
+
+  test -n "$database_host"
+  test -n "$database_port"
+  test -n "$database_user"
+  test -n "$database_name"
+  test -n "$database_password"
+
   umask 077
   cp .env.example .env
 
-  pg_password="$(openssl rand -hex 32)"
+  local_pg_password="$(openssl rand -hex 32)"
   redis_password="$(openssl rand -hex 32)"
   admin_password="$(openssl rand -hex 24)"
   jwt_secret="$(openssl rand -hex 32)"
@@ -63,7 +97,8 @@ cd /opt/sub2api/deploy
 
   sed -i \
     -e 's|^BIND_HOST=.*|BIND_HOST=127.0.0.1|' \
-    -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${pg_password}|" \
+    -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${local_pg_password}|" \
+    -e "s|^DATABASE_PORT=.*|DATABASE_PORT=${database_port}|" \
     -e "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_password}|" \
     -e "s|^ADMIN_EMAIL=.*|ADMIN_EMAIL=${admin_email}|" \
     -e "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${admin_password}|" \
@@ -71,7 +106,12 @@ cd /opt/sub2api/deploy
     -e "s|^TOTP_ENCRYPTION_KEY=.*|TOTP_ENCRYPTION_KEY=${totp_key}|" \
     .env
 
-  printf '\nSUB2API_IMAGE_TAG=%s\n' "$image_tag" >> .env
+  printf '\nDATABASE_HOST=%s\n' "$database_host" >> .env
+  printf 'DATABASE_USER=%s\n' "$database_user" >> .env
+  printf 'DATABASE_PASSWORD=%s\n' "$database_password" >> .env
+  printf 'DATABASE_DBNAME=%s\n' "$database_name" >> .env
+  printf 'DATABASE_SSLMODE=require\n' >> .env
+  printf 'SUB2API_IMAGE_TAG=%s\n' "$image_tag" >> .env
 
   cat > /root/sub2api-initial-admin.txt <<EOF
 ADMIN_EMAIL=${admin_email}
@@ -82,7 +122,7 @@ EOF
   mkdir -p data postgres_data redis_data backups
   chmod 700 backups
 
-  unset pg_password redis_password admin_password jwt_secret totp_key
+  unset database_password local_pg_password redis_password admin_password jwt_secret totp_key
 
   docker compose \
     -f docker-compose.local.yml \
@@ -95,6 +135,9 @@ EOF
 
 首次登录并修改管理员密码后，将初始密码保存到密码管理器，并删除
 `/root/sub2api-initial-admin.txt`。
+
+`POSTGRES_PASSWORD` 仅用于保留的旧本地 PostgreSQL 定义；生产应用实际使用
+`DATABASE_*` 连接 Railway。实际值只保留在权限为 `600` 的 `.env` 和加密备份中。
 
 ### 4. 启动服务
 
@@ -117,9 +160,21 @@ docker compose \
   ps
 
 curl -fsS http://127.0.0.1:8080/health
+echo
+
+docker inspect sub2api \
+  --format '{{range .Config.Env}}{{println .}}{{end}}' \
+  | grep -E '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_DBNAME|DATABASE_SSLMODE|REDIS_HOST|REDIS_PORT)='
 ```
 
-三个容器都应显示 `healthy`。公网 HTTPS 继续由 Caddy 或其他反向代理转发到
+`sub2api` 和 `redis` 应显示 `healthy`，本地 `postgres` 不应默认启动。连接信息应显示：
+
+- `DATABASE_HOST` 为 Railway TCP Proxy 主机；
+- `DATABASE_PORT` 为 Railway TCP Proxy 端口；
+- `DATABASE_SSLMODE=require`；
+- `REDIS_HOST=redis`、`REDIS_PORT=6379`。
+
+上面的检查不会输出数据库密码。公网 HTTPS 继续由 Caddy 或其他反向代理转发到
 `127.0.0.1:8080`；不要向公网开放 `8080`、`5432` 或 `6379`。
 
 ## 二、发布新版本
@@ -155,23 +210,35 @@ echo "TARGET_IMAGE_TAG=${new_tag}"
   backup_file="backups/sub2api-before-${stamp}.dump"
   temp_file="${backup_file}.tmp"
 
-  trap 'rm -f "$temp_file"' EXIT
+  db_env="$(mktemp)"
+  chmod 600 "$db_env"
+  trap 'rm -f "$temp_file" "$db_env"' EXIT
 
-  docker compose \
-    -f docker-compose.local.yml \
-    -f docker-compose.prod.yml \
-    exec -T postgres \
-    sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$temp_file"
+  grep -E '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_PASSWORD|DATABASE_DBNAME|DATABASE_SSLMODE)=.+' \
+    .env > "$db_env"
+  test "$(wc -l < "$db_env")" -eq 6
+
+  docker run --rm -i \
+    --env-file "$db_env" \
+    postgres:18-alpine \
+    sh -ec '
+      export PGPASSWORD="$DATABASE_PASSWORD"
+      export PGSSLMODE="${DATABASE_SSLMODE:-require}"
+      exec pg_dump \
+        -h "$DATABASE_HOST" \
+        -p "$DATABASE_PORT" \
+        -U "$DATABASE_USER" \
+        -d "$DATABASE_DBNAME" \
+        -Fc
+    ' > "$temp_file"
 
   test -s "$temp_file"
 
-  docker compose \
-    -f docker-compose.local.yml \
-    -f docker-compose.prod.yml \
-    exec -T postgres pg_restore -l < "$temp_file" >/dev/null
+  docker run --rm -i postgres:18-alpine pg_restore -l < "$temp_file" >/dev/null
 
   mv "$temp_file" "$backup_file"
   chmod 600 "$backup_file"
+  rm -f "$db_env"
   trap - EXIT
 
   echo "BACKUP_OK=${backup_file}"
@@ -230,7 +297,7 @@ docker inspect \
 curl -fsS http://127.0.0.1:8080/health
 ```
 
-`--no-deps` 保证更新时不重启 PostgreSQL 和 Redis。
+`--no-deps` 保证更新时不重启本地 Redis。Railway PostgreSQL 是外部服务，不由 Compose 重启。
 
 ## 三、应用镜像回滚
 
@@ -247,3 +314,19 @@ docker compose down -v
 ```
 
 `-v` 会删除 Docker 卷。也不要删除尚未完成验证的数据库备份和上一版本镜像。
+
+## 四、旧本地 PostgreSQL 与恢复边界
+
+`docker-compose.prod.yml` 为 `postgres` 服务设置了 `local-postgres` profile。旧服务定义和
+`postgres_data` 仍保留，但普通的 `up -d` 不会启动它。只在明确的恢复或取证操作中启动：
+
+```bash
+docker compose \
+  -f docker-compose.local.yml \
+  -f docker-compose.prod.yml \
+  --profile local-postgres \
+  up -d postgres
+```
+
+这不是自动故障转移。旧本地 PostgreSQL 中的数据会落后于 Railway，不得在未核对数据和
+连接参数时直接将生产应用指回它。确认 Railway 稳定后可停止旧容器，但不要删除数据目录或数据卷。
