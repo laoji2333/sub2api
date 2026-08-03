@@ -1,9 +1,9 @@
 # =============================================================================
-# CVAPI Production - Railway PostgreSQL + Local Redis
+# CVAPI Production - Railway PostgreSQL + External Redis (Plain TCP)
 # =============================================================================
 # Apply after docker-compose.yml or docker-compose.local.yml.
 # Requires Docker Compose 2.24.4+ because !override removes the inherited
-# dependency on the local PostgreSQL healthcheck.
+# dependencies on the local PostgreSQL and Redis healthchecks.
 # Keep all real credentials in .env; never commit them.
 # =============================================================================
 
@@ -17,12 +17,22 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required for Railway PostgreSQL}
       DATABASE_DBNAME: ${DATABASE_DBNAME:?DATABASE_DBNAME is required for Railway PostgreSQL}
       DATABASE_SSLMODE: ${DATABASE_SSLMODE:-require}
-    depends_on: !override
-      redis:
-        condition: service_healthy
+      REDIS_HOST: ${REDIS_HOST:?REDIS_HOST is required for external Redis}
+      REDIS_PORT: ${REDIS_PORT:?REDIS_PORT is required for external Redis}
+      REDIS_USERNAME: ${REDIS_USERNAME:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required for external Redis}
+      REDIS_DB: ${REDIS_DB:-0}
+      REDIS_ENABLE_TLS: "false"
+    depends_on: !override {}
 
   # Preserve the old local PostgreSQL definition and data for an explicit
   # rollback/recovery operation, but do not start it in production by default.
   postgres:
     profiles:
       - local-postgres
+
+  # Preserve the local Redis definition and data for an explicit recovery
+  # operation, but do not start it in production by default.
+  redis:
+    profiles:
+      - local-redis

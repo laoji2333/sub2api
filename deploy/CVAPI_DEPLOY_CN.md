@@ -11,12 +11,12 @@ ghcr.io/laoji2333/sub2api
 目标架构为：
 
 - PostgreSQL：Railway 公网 TCP Proxy，强制 SSL；
-- Redis：部署服务器上的本地 `sub2api-redis`；
+- Redis：外部 TCP 服务，当前明确使用明文连接；
 - 应用：`ghcr.io/laoji2333/sub2api` 的不可变镜像；
-- 旧本地 PostgreSQL：保留服务定义和数据，但默认不启动。
+- 本地 PostgreSQL 和 Redis：保留服务定义和数据，但默认不启动。
 
 `docker-compose.prod.yml` 要放在 `docker-compose.yml` 或 `docker-compose.local.yml`
-之后合并；它同时覆盖应用镜像、PostgreSQL 连接和启动依赖，并保持 Redis 为本地服务。
+之后合并；它同时覆盖应用镜像、PostgreSQL/Redis 连接和启动依赖。
 
 本文示例使用 `docker-compose.local.yml`。如果现有服务器使用命名卷版
 `docker-compose.yml`，将命令中的第一个 Compose 文件替换为它即可。
@@ -25,7 +25,7 @@ ghcr.io/laoji2333/sub2api
 `x86_64`；ARM 服务器需要先扩展镜像工作流。
 
 `docker-compose.prod.yml` 使用 Compose 官方的 `!override` 标签移除应用对本地
-PostgreSQL 健康检查的依赖，因此需要 Docker Compose 2.24.4 或更高版本：
+PostgreSQL、Redis 健康检查的依赖，因此需要 Docker Compose 2.24.4 或更高版本：
 
 ```bash
 docker compose version
@@ -33,6 +33,10 @@ docker compose version
 
 在 Railway PostgreSQL 服务中启用 Public Networking，使用它提供的 TCP Proxy
 主机和端口。不要把 `DATABASE_PUBLIC_URL`、密码或 `.env` 提交到 Git。
+
+外部 Redis 必须启用密码认证，并在服务器防火墙或服务商访问控制中只允许新应用
+服务器的固定公网 IP 连接。当前方案使用普通 TCP，Redis 密码、命令和数据不会加密；
+不得把 Redis 端口对 `0.0.0.0/0` 或整个公网开放。
 
 ## 一、新服务器首次部署
 
@@ -54,8 +58,9 @@ cd /opt/sub2api/deploy
 
 ### 3. 创建生产配置
 
-下面的命令会交互式读取 Railway 的拆分连接字段，数据库密码输入时不显示；
-同时在服务器内部生成 Redis、JWT、TOTP 和管理员密钥。管理员初始密码仅写入
+下面的命令会交互式读取 Railway PostgreSQL 和外部 Redis 的拆分连接字段，
+数据库及 Redis 密码输入时不显示；同时在服务器内部生成本地 PostgreSQL、JWT、
+TOTP 和管理员密钥。管理员初始密码仅写入
 `/root/sub2api-initial-admin.txt`，不要把该文件内容发送到聊天、日志或代码仓库。
 
 ```bash
@@ -79,17 +84,26 @@ cd /opt/sub2api/deploy
   read -r -s -p "Railway DATABASE_PASSWORD: " database_password
   printf '\n'
 
+  read -r -p "External REDIS_HOST: " redis_host
+  read -r -p "External REDIS_PORT: " redis_port
+  read -r -p "External REDIS_USERNAME (empty for default user): " redis_username
+  read -r -s -p "External REDIS_PASSWORD: " redis_password
+  printf '\n'
+
   test -n "$database_host"
   test -n "$database_port"
   test -n "$database_user"
   test -n "$database_name"
   test -n "$database_password"
+  test -n "$redis_host"
+  test -n "$redis_port"
+  test -n "$redis_password"
 
   umask 077
-  cp .env.example .env
+  grep -vE '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_PASSWORD|DATABASE_DBNAME|DATABASE_SSLMODE|REDIS_HOST|REDIS_PORT|REDIS_USERNAME|REDIS_PASSWORD|REDIS_DB|REDIS_ENABLE_TLS|SUB2API_IMAGE_TAG)=' \
+    .env.example > .env
 
   local_pg_password="$(openssl rand -hex 32)"
-  redis_password="$(openssl rand -hex 32)"
   admin_password="$(openssl rand -hex 24)"
   jwt_secret="$(openssl rand -hex 32)"
   totp_key="$(openssl rand -hex 32)"
@@ -98,8 +112,6 @@ cd /opt/sub2api/deploy
   sed -i \
     -e 's|^BIND_HOST=.*|BIND_HOST=127.0.0.1|' \
     -e "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=${local_pg_password}|" \
-    -e "s|^DATABASE_PORT=.*|DATABASE_PORT=${database_port}|" \
-    -e "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=${redis_password}|" \
     -e "s|^ADMIN_EMAIL=.*|ADMIN_EMAIL=${admin_email}|" \
     -e "s|^ADMIN_PASSWORD=.*|ADMIN_PASSWORD=${admin_password}|" \
     -e "s|^JWT_SECRET=.*|JWT_SECRET=${jwt_secret}|" \
@@ -111,6 +123,12 @@ cd /opt/sub2api/deploy
   printf 'DATABASE_PASSWORD=%s\n' "$database_password" >> .env
   printf 'DATABASE_DBNAME=%s\n' "$database_name" >> .env
   printf 'DATABASE_SSLMODE=require\n' >> .env
+  printf 'REDIS_HOST=%s\n' "$redis_host" >> .env
+  printf 'REDIS_PORT=%s\n' "$redis_port" >> .env
+  printf 'REDIS_USERNAME=%s\n' "$redis_username" >> .env
+  printf 'REDIS_PASSWORD=%s\n' "$redis_password" >> .env
+  printf 'REDIS_DB=0\n' >> .env
+  printf 'REDIS_ENABLE_TLS=false\n' >> .env
   printf 'SUB2API_IMAGE_TAG=%s\n' "$image_tag" >> .env
 
   cat > /root/sub2api-initial-admin.txt <<EOF
@@ -136,8 +154,9 @@ EOF
 首次登录并修改管理员密码后，将初始密码保存到密码管理器，并删除
 `/root/sub2api-initial-admin.txt`。
 
-`POSTGRES_PASSWORD` 仅用于保留的旧本地 PostgreSQL 定义；生产应用实际使用
-`DATABASE_*` 连接 Railway。实际值只保留在权限为 `600` 的 `.env` 和加密备份中。
+`POSTGRES_PASSWORD` 仅用于保留的本地 PostgreSQL 定义；生产应用实际使用
+`DATABASE_*` 连接 Railway，并使用 `REDIS_*` 连接外部 Redis。实际值只保留在权限为
+`600` 的 `.env` 和加密备份中。
 
 ### 4. 启动服务
 
@@ -164,18 +183,21 @@ echo
 
 docker inspect sub2api \
   --format '{{range .Config.Env}}{{println .}}{{end}}' \
-  | grep -E '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_DBNAME|DATABASE_SSLMODE|REDIS_HOST|REDIS_PORT)='
+  | grep -E '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_DBNAME|DATABASE_SSLMODE|REDIS_HOST|REDIS_PORT|REDIS_USERNAME|REDIS_DB|REDIS_ENABLE_TLS)='
 ```
 
-`sub2api` 和 `redis` 应显示 `healthy`，本地 `postgres` 不应默认启动。连接信息应显示：
+只有 `sub2api` 应默认启动并显示 `healthy`，本地 `postgres`、`redis` 不应启动。
+连接信息应显示：
 
 - `DATABASE_HOST` 为 Railway TCP Proxy 主机；
 - `DATABASE_PORT` 为 Railway TCP Proxy 端口；
 - `DATABASE_SSLMODE=require`；
-- `REDIS_HOST=redis`、`REDIS_PORT=6379`。
+- `REDIS_HOST` 和 `REDIS_PORT` 为外部 Redis TCP 地址；
+- `REDIS_ENABLE_TLS=false`。
 
-上面的检查不会输出数据库密码。公网 HTTPS 继续由 Caddy 或其他反向代理转发到
-`127.0.0.1:8080`；不要向公网开放 `8080`、`5432` 或 `6379`。
+上面的检查不会输出数据库或 Redis 密码。公网 HTTPS 继续由 Caddy 或其他反向代理
+转发到 `127.0.0.1:8080`；不要向公网开放应用的 `8080`。外部 Redis 端口只允许
+应用服务器的固定公网 IP 访问。
 
 ## 二、发布新版本
 
@@ -297,7 +319,7 @@ docker inspect \
 curl -fsS http://127.0.0.1:8080/health
 ```
 
-`--no-deps` 保证更新时不重启本地 Redis。Railway PostgreSQL 是外部服务，不由 Compose 重启。
+`--no-deps` 保证只替换应用容器。Railway PostgreSQL 和外部 Redis 都不由 Compose 重启。
 
 ## 三、应用镜像回滚
 
@@ -315,10 +337,11 @@ docker compose down -v
 
 `-v` 会删除 Docker 卷。也不要删除尚未完成验证的数据库备份和上一版本镜像。
 
-## 四、旧本地 PostgreSQL 与恢复边界
+## 四、本地数据服务与恢复边界
 
-`docker-compose.prod.yml` 为 `postgres` 服务设置了 `local-postgres` profile。旧服务定义和
-`postgres_data` 仍保留，但普通的 `up -d` 不会启动它。只在明确的恢复或取证操作中启动：
+`docker-compose.prod.yml` 为 `postgres` 和 `redis` 分别设置了 `local-postgres`、
+`local-redis` profile。本地服务定义及数据仍保留，但普通的 `up -d` 不会启动它们。
+只在明确的恢复或取证操作中启动：
 
 ```bash
 docker compose \
@@ -328,5 +351,13 @@ docker compose \
   up -d postgres
 ```
 
-这不是自动故障转移。旧本地 PostgreSQL 中的数据会落后于 Railway，不得在未核对数据和
-连接参数时直接将生产应用指回它。确认 Railway 稳定后可停止旧容器，但不要删除数据目录或数据卷。
+```bash
+docker compose \
+  -f docker-compose.local.yml \
+  -f docker-compose.prod.yml \
+  --profile local-redis \
+  up -d redis
+```
+
+这不是自动故障转移。本地服务中的数据可能落后于外部数据服务，不得在未核对数据和
+连接参数时直接将生产应用指回它们。不要删除尚未验证的数据目录或数据卷。
