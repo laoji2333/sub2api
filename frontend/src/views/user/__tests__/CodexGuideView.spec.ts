@@ -12,10 +12,12 @@ const messages: Record<string, string> = {
   'codexGuide.steps.apiKey.title': 'Create an API Key',
   'codexGuide.steps.apiKey.description': 'Create an OpenAI-compatible key.',
   'codexGuide.steps.apiKey.action': 'Create API Key',
-  'codexGuide.steps.codingAssistant.title': 'Install a Coding Assistant',
-  'codexGuide.steps.codingAssistant.description': 'Download and install Codex or Claude Code.',
-  'codexGuide.steps.codingAssistant.codexAction': 'Download Codex',
-  'codexGuide.steps.codingAssistant.claudeCodeAction': 'Download Claude Code',
+  'codexGuide.steps.codingAssistant.title': 'Install Codex and Claude Code',
+  'codexGuide.steps.codingAssistant.description': 'Choose a version.',
+  'codexGuide.steps.codingAssistant.codexDescription': 'Codex versions.',
+  'codexGuide.steps.codingAssistant.claudeCodeDescription': 'Claude Code versions.',
+  'codexGuide.steps.codingAssistant.cliAction': 'CLI Version',
+  'codexGuide.steps.codingAssistant.clientAction': 'Desktop App',
 }
 
 vi.mock('vue-i18n', async () => {
@@ -47,22 +49,27 @@ describe('CodexGuideView', () => {
 
     expect(steps).toHaveLength(3)
     expect(steps[0].text()).toContain('Install CC Switch')
-    expect(steps[1].text()).toContain('Install a Coding Assistant')
-    expect(steps[1].text()).toContain('Download Codex')
-    expect(steps[1].text()).toContain('Download Claude Code')
+    expect(steps[1].text()).toContain('Install Codex and Claude Code')
+    expect(steps[1].text()).toContain('Codex versions.')
+    expect(steps[1].text()).toContain('Claude Code versions.')
+    expect(steps[1].findAll('a')).toHaveLength(4)
     expect(steps[2].text()).toContain('Create an API Key')
   })
 
   it('uses the supplied download links safely', () => {
     const wrapper = mountView()
     const ccSwitchLink = wrapper.get('[data-testid="cc-switch-download"]')
+    const codexCliLink = wrapper.get('[data-testid="codex-cli-download"]')
     const codexLink = wrapper.get('[data-testid="codex-download"]')
     const claudeCodeLink = wrapper.get('[data-testid="claude-code-download"]')
+    const claudeCodeCliLink = wrapper.get('[data-testid="claude-code-cli-download"]')
 
     expect(ccSwitchLink.attributes('href')).toBe('https://ccswitch.io/zh/download')
+    expect(codexCliLink.attributes('href')).toBe('https://learn.chatgpt.com/docs/codex/cli')
     expect(codexLink.attributes('href')).toBe('https://learn.chatgpt.com/docs/app')
     expect(claudeCodeLink.attributes('href')).toBe('https://claude.com/download')
-    for (const link of [ccSwitchLink, codexLink, claudeCodeLink]) {
+    expect(claudeCodeCliLink.attributes('href')).toBe('https://code.claude.com/docs/zh-CN/setup')
+    for (const link of [ccSwitchLink, codexCliLink, codexLink, claudeCodeCliLink, claudeCodeLink]) {
       expect(link.attributes('target')).toBe('_blank')
       expect(link.attributes('rel')).toBe('noopener noreferrer')
     }

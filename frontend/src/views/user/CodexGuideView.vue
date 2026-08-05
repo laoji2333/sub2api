@@ -50,27 +50,74 @@
                 {{ t('codexGuide.steps.codingAssistant.description') }}
               </p>
 
-              <div class="mt-4 flex flex-col gap-3 sm:flex-row">
-                <a
-                  :href="CODEX_DOWNLOAD_URL"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn-primary w-full justify-center sm:w-auto"
-                  data-testid="codex-download"
-                >
-                  <Icon name="download" size="sm" />
-                  {{ t('codexGuide.steps.codingAssistant.codexAction') }}
-                </a>
-                <a
-                  :href="CLAUDE_CODE_DOWNLOAD_URL"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="btn btn-primary w-full justify-center sm:w-auto"
-                  data-testid="claude-code-download"
-                >
-                  <Icon name="download" size="sm" />
-                  {{ t('codexGuide.steps.codingAssistant.claudeCodeAction') }}
-                </a>
+              <div class="mt-5 divide-y divide-gray-200 border-t border-gray-200 dark:divide-dark-700 dark:border-dark-700">
+                <div class="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <Icon name="terminal" size="sm" class="mt-0.5 flex-none text-gray-500 dark:text-dark-300" />
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Codex</h4>
+                      <p class="mt-1 text-sm leading-5 text-gray-600 dark:text-dark-300">
+                        {{ t('codexGuide.steps.codingAssistant.codexDescription') }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-none">
+                    <a
+                      :href="CODEX_CLI_DOWNLOAD_URL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-secondary px-3"
+                      data-testid="codex-cli-download"
+                    >
+                      <Icon name="terminal" size="sm" />
+                      {{ t('codexGuide.steps.codingAssistant.cliAction') }}
+                    </a>
+                    <a
+                      :href="CODEX_DOWNLOAD_URL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-secondary px-3"
+                      data-testid="codex-download"
+                    >
+                      <Icon name="download" size="sm" />
+                      {{ t('codexGuide.steps.codingAssistant.clientAction') }}
+                    </a>
+                  </div>
+                </div>
+
+                <div class="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex min-w-0 items-start gap-3">
+                    <Icon name="terminal" size="sm" class="mt-0.5 flex-none text-gray-500 dark:text-dark-300" />
+                    <div class="min-w-0">
+                      <h4 class="text-sm font-semibold text-gray-900 dark:text-white">Claude Code</h4>
+                      <p class="mt-1 text-sm leading-5 text-gray-600 dark:text-dark-300">
+                        {{ t('codexGuide.steps.codingAssistant.claudeCodeDescription') }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-none">
+                    <a
+                      :href="CLAUDE_CODE_CLI_DOWNLOAD_URL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-secondary px-3"
+                      data-testid="claude-code-cli-download"
+                    >
+                      <Icon name="terminal" size="sm" />
+                      {{ t('codexGuide.steps.codingAssistant.cliAction') }}
+                    </a>
+                    <a
+                      :href="CLAUDE_CODE_DOWNLOAD_URL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="btn btn-secondary px-3"
+                      data-testid="claude-code-download"
+                    >
+                      <Icon name="download" size="sm" />
+                      {{ t('codexGuide.steps.codingAssistant.clientAction') }}
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -110,8 +157,10 @@ import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 const CC_SWITCH_URL = 'https://ccswitch.io/zh/download'
+const CODEX_CLI_DOWNLOAD_URL = 'https://learn.chatgpt.com/docs/codex/cli'
 const CODEX_DOWNLOAD_URL = 'https://learn.chatgpt.com/docs/app'
 const CLAUDE_CODE_DOWNLOAD_URL = 'https://claude.com/download'
+const CLAUDE_CODE_CLI_DOWNLOAD_URL = 'https://code.claude.com/docs/zh-CN/setup'
 
 const { t } = useI18n()
 </script>
