@@ -220,53 +220,7 @@ echo "TARGET_IMAGE_TAG=${new_tag}"
 
 ### 2. 备份 PostgreSQL
 
-```bash
-(
-  set -eu
-  cd /opt/sub2api/deploy
-
-  mkdir -p backups
-  chmod 700 backups
-
-  stamp="$(date +%Y%m%d-%H%M%S)"
-  backup_file="backups/sub2api-before-${stamp}.dump"
-  temp_file="${backup_file}.tmp"
-
-  db_env="$(mktemp)"
-  chmod 600 "$db_env"
-  trap 'rm -f "$temp_file" "$db_env"' EXIT
-
-  grep -E '^(DATABASE_HOST|DATABASE_PORT|DATABASE_USER|DATABASE_PASSWORD|DATABASE_DBNAME|DATABASE_SSLMODE)=.+' \
-    .env > "$db_env"
-  test "$(wc -l < "$db_env")" -eq 6
-
-  docker run --rm -i \
-    --env-file "$db_env" \
-    postgres:18-alpine \
-    sh -ec '
-      export PGPASSWORD="$DATABASE_PASSWORD"
-      export PGSSLMODE="${DATABASE_SSLMODE:-require}"
-      exec pg_dump \
-        -h "$DATABASE_HOST" \
-        -p "$DATABASE_PORT" \
-        -U "$DATABASE_USER" \
-        -d "$DATABASE_DBNAME" \
-        -Fc
-    ' > "$temp_file"
-
-  test -s "$temp_file"
-
-  docker run --rm -i postgres:18-alpine pg_restore -l < "$temp_file" >/dev/null
-
-  mv "$temp_file" "$backup_file"
-  chmod 600 "$backup_file"
-  rm -f "$db_env"
-  trap - EXIT
-
-  echo "BACKUP_OK=${backup_file}"
-  ls -lh "$backup_file"
-)
-```
+#### 网站管理界面手动备份
 
 ### 3. 固定新镜像标签
 
