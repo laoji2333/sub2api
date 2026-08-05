@@ -4,7 +4,7 @@ import { mount, RouterLinkStub } from '@vue/test-utils'
 import CodexGuideView from '../CodexGuideView.vue'
 
 const messages: Record<string, string> = {
-  'codexGuide.heading': 'Connect Codex',
+  'codexGuide.heading': 'Initial Setup',
   'codexGuide.description': 'Follow these steps.',
   'codexGuide.steps.ccSwitch.title': 'Install CC Switch',
   'codexGuide.steps.ccSwitch.description': 'Manage Codex provider configuration.',
@@ -12,9 +12,10 @@ const messages: Record<string, string> = {
   'codexGuide.steps.apiKey.title': 'Create an API Key',
   'codexGuide.steps.apiKey.description': 'Create an OpenAI-compatible key.',
   'codexGuide.steps.apiKey.action': 'Create API Key',
-  'codexGuide.steps.codex.title': 'Install Codex',
-  'codexGuide.steps.codex.description': 'Download and install Codex.',
-  'codexGuide.steps.codex.downloadAction': 'Download Codex',
+  'codexGuide.steps.codingAssistant.title': 'Install a Coding Assistant',
+  'codexGuide.steps.codingAssistant.description': 'Download and install Codex or Claude Code.',
+  'codexGuide.steps.codingAssistant.codexAction': 'Download Codex',
+  'codexGuide.steps.codingAssistant.claudeCodeAction': 'Download Claude Code',
 }
 
 vi.mock('vue-i18n', async () => {
@@ -46,7 +47,9 @@ describe('CodexGuideView', () => {
 
     expect(steps).toHaveLength(3)
     expect(steps[0].text()).toContain('Install CC Switch')
-    expect(steps[1].text()).toContain('Install Codex')
+    expect(steps[1].text()).toContain('Install a Coding Assistant')
+    expect(steps[1].text()).toContain('Download Codex')
+    expect(steps[1].text()).toContain('Download Claude Code')
     expect(steps[2].text()).toContain('Create an API Key')
   })
 
@@ -54,10 +57,12 @@ describe('CodexGuideView', () => {
     const wrapper = mountView()
     const ccSwitchLink = wrapper.get('[data-testid="cc-switch-download"]')
     const codexLink = wrapper.get('[data-testid="codex-download"]')
+    const claudeCodeLink = wrapper.get('[data-testid="claude-code-download"]')
 
-    expect(ccSwitchLink.attributes('href')).toBe('https://github.com/farion1231/cc-switch/releases')
+    expect(ccSwitchLink.attributes('href')).toBe('https://ccswitch.io/zh/download')
     expect(codexLink.attributes('href')).toBe('https://learn.chatgpt.com/docs/app')
-    for (const link of [ccSwitchLink, codexLink]) {
+    expect(claudeCodeLink.attributes('href')).toBe('https://claude.com/download')
+    for (const link of [ccSwitchLink, codexLink, claudeCodeLink]) {
       expect(link.attributes('target')).toBe('_blank')
       expect(link.attributes('rel')).toBe('noopener noreferrer')
     }

@@ -44,22 +44,34 @@
             </span>
             <div class="min-w-0 flex-1">
               <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                {{ t('codexGuide.steps.codex.title') }}
+                {{ t('codexGuide.steps.codingAssistant.title') }}
               </h3>
               <p class="mt-1 text-sm leading-6 text-gray-600 dark:text-dark-300">
-                {{ t('codexGuide.steps.codex.description') }}
+                {{ t('codexGuide.steps.codingAssistant.description') }}
               </p>
 
-              <a
-                :href="CODEX_DOWNLOAD_URL"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="btn btn-primary mt-4 w-full justify-center sm:w-auto"
-                data-testid="codex-download"
-              >
-                <Icon name="download" size="sm" />
-                {{ t('codexGuide.steps.codex.downloadAction') }}
-              </a>
+              <div class="mt-4 flex flex-col gap-3 sm:flex-row">
+                <a
+                  :href="CODEX_DOWNLOAD_URL"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-primary w-full justify-center sm:w-auto"
+                  data-testid="codex-download"
+                >
+                  <Icon name="download" size="sm" />
+                  {{ t('codexGuide.steps.codingAssistant.codexAction') }}
+                </a>
+                <a
+                  :href="CLAUDE_CODE_DOWNLOAD_URL"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="btn btn-primary w-full justify-center sm:w-auto"
+                  data-testid="claude-code-download"
+                >
+                  <Icon name="download" size="sm" />
+                  {{ t('codexGuide.steps.codingAssistant.claudeCodeAction') }}
+                </a>
+              </div>
             </div>
           </div>
         </li>
@@ -97,8 +109,9 @@ import { useI18n } from 'vue-i18n'
 import AppLayout from '@/components/layout/AppLayout.vue'
 import Icon from '@/components/icons/Icon.vue'
 
-const CC_SWITCH_URL = 'https://github.com/farion1231/cc-switch/releases'
+const CC_SWITCH_URL = 'https://ccswitch.io/zh/download'
 const CODEX_DOWNLOAD_URL = 'https://learn.chatgpt.com/docs/app'
+const CLAUDE_CODE_DOWNLOAD_URL = 'https://claude.com/download'
 
 const { t } = useI18n()
 </script>

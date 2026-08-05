@@ -20,15 +20,15 @@ describe('AppSidebar custom SVG styles', () => {
 })
 
 describe('AppSidebar Codex navigation', () => {
-  it('places the Codex guide directly after the profile entry', () => {
-    const profileEntry = "{ path: '/profile', label: t('nav.profile'), icon: UserIcon }"
+  it('places the setup guide directly before the API keys entry', () => {
     const codexEntry = "{ path: '/codex', label: t('nav.codexGuide'), icon: TerminalIcon }"
-    const profileIndex = componentSource.indexOf(profileEntry)
+    const apiKeysEntry = "{ path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon }"
     const codexIndex = componentSource.indexOf(codexEntry)
+    const apiKeysIndex = componentSource.indexOf(apiKeysEntry)
 
-    expect(profileIndex).toBeGreaterThan(-1)
-    expect(codexIndex).toBeGreaterThan(profileIndex)
-    expect(componentSource.slice(profileIndex + profileEntry.length, codexIndex)).not.toContain('{ path:')
+    expect(codexIndex).toBeGreaterThan(-1)
+    expect(apiKeysIndex).toBeGreaterThan(codexIndex)
+    expect(componentSource.slice(codexIndex + codexEntry.length, apiKeysIndex)).not.toContain('{ path:')
   })
 })
 
