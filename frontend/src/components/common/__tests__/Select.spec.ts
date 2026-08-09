@@ -65,6 +65,34 @@ afterEach(() => {
 })
 
 describe('Select dropdown viewport constraints', () => {
+  it('renders an optional dropdown header between search and options', async () => {
+    setViewportWidth(1024)
+    mockTriggerRect(20, 240)
+
+    const wrapper = mount(Select, {
+      props: {
+        modelValue: null,
+        searchable: true,
+        options: [{ value: 'example', label: 'Example' }],
+      },
+      slots: {
+        'dropdown-header': '<div data-test="dropdown-header-content">Platforms</div>',
+      },
+    })
+    unmountWrapper = () => wrapper.unmount()
+
+    await wrapper.get('button').trigger('click')
+    await nextTick()
+
+    const dropdown = document.body.querySelector<HTMLElement>('.select-dropdown-portal')
+    expect(dropdown?.querySelector('[data-test="dropdown-header-content"]')?.textContent).toBe('Platforms')
+    expect(Array.from(dropdown?.children ?? []).map((child) => child.className)).toEqual([
+      'select-search',
+      'select-dropdown-header',
+      'select-options',
+    ])
+  })
+
   it('preserves the existing 200px minimum width when space is available', async () => {
     setViewportWidth(1024)
     mockTriggerRect(20, 80)

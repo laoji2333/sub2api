@@ -73,6 +73,10 @@
             />
           </div>
 
+          <div v-if="$slots['dropdown-header']" class="select-dropdown-header">
+            <slot name="dropdown-header" />
+          </div>
+
           <!-- Options list -->
           <div class="select-options" ref="optionsListRef">
             <div
@@ -531,6 +535,10 @@ onUnmounted(() => {
   @apply text-gray-900 dark:text-gray-100;
   @apply placeholder:text-gray-400 dark:placeholder:text-dark-400;
   @apply focus:outline-none;
+}
+
+.select-dropdown-portal .select-dropdown-header {
+  @apply border-b border-gray-100 p-2 dark:border-dark-700;
 }
 
 .select-dropdown-portal .select-options {

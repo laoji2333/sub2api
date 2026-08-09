@@ -66,7 +66,16 @@ function mountRegister() {
   return mount(RegisterView, {
     global: {
       stubs: {
-        AuthLayout: { template: '<div><slot /><slot name="footer" /></div>' },
+        AuthLayout: {
+          name: 'AuthLayout',
+          props: {
+            split: {
+              type: Boolean,
+              default: false
+            }
+          },
+          template: '<div><slot /><slot name="footer" /></div>'
+        },
         Icon: true,
         TurnstileWidget: { template: '<div data-testid="turnstile-widget" />' },
         LoginAgreementPrompt: true,
@@ -88,6 +97,13 @@ describe('RegisterView invitation layout', () => {
     showErrorMock.mockReset()
     getPublicSettingsMock.mockResolvedValue(publicSettings)
     registerMock.mockResolvedValue({})
+  })
+
+  it('uses the split auth layout', async () => {
+    const wrapper = mountRegister()
+    await flushPromises()
+
+    expect(wrapper.getComponent({ name: 'AuthLayout' }).props('split')).toBe(true)
   })
 
   it('keeps the optional affiliate invitation field before Turnstile', async () => {

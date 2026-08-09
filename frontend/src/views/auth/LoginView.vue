@@ -1,8 +1,8 @@
 <template>
-  <AuthLayout>
-    <div class="space-y-6">
+  <AuthLayout split>
+    <div class="space-y-7">
       <!-- Title -->
-      <div class="text-center">
+      <div class="text-center lg:text-left">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('auth.welcomeBack') }}
         </h2>
@@ -17,9 +17,13 @@
           <label for="email" class="input-label">
             {{ t('auth.emailLabel') }}
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="mail" size="md" class="text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="mail"
+                size="md"
+                class="text-gray-400 transition-colors group-focus-within:text-primary-500 dark:text-dark-500"
+              />
             </div>
             <input
               id="email"
@@ -29,7 +33,7 @@
               autofocus
               autocomplete="email"
               :disabled="authActionDisabled"
-              class="input pl-11"
+              class="input h-12 bg-white/80 pl-11 shadow-sm dark:bg-dark-900/70"
               :class="{ 'input-error': errors.email }"
               :placeholder="t('auth.emailPlaceholder')"
             />
@@ -41,9 +45,13 @@
           <label for="password" class="input-label">
             {{ t('auth.passwordLabel') }}
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="lock" size="md" class="text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="lock"
+                size="md"
+                class="text-gray-400 transition-colors group-focus-within:text-primary-500 dark:text-dark-500"
+              />
             </div>
             <input
               id="password"
@@ -52,7 +60,7 @@
               required
               autocomplete="current-password"
               :disabled="authActionDisabled"
-              class="input pl-11 pr-11"
+              class="input h-12 bg-white/80 pl-11 pr-11 shadow-sm dark:bg-dark-900/70"
               :class="{ 'input-error': errors.password }"
               :placeholder="t('auth.passwordPlaceholder')"
             />
@@ -60,14 +68,13 @@
               type="button"
               @click="showPassword = !showPassword"
               :disabled="authActionDisabled"
-              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-dark-300"
+              class="absolute inset-y-0 right-0 flex items-center rounded-r-xl px-3.5 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 dark:hover:text-dark-300"
             >
               <Icon v-if="showPassword" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
-          <div class="mt-1 flex items-center justify-between">
-            <span></span>
+          <div class="mt-2 flex justify-end">
             <router-link
               v-if="passwordResetEnabled && !backendModeEnabled"
               to="/forgot-password"
@@ -101,7 +108,7 @@
         <button
           type="submit"
           :disabled="authActionDisabled || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary h-12 w-full text-base shadow-lg shadow-primary-500/20 transition-all hover:-translate-y-0.5 hover:shadow-primary-500/30"
         >
           <svg
             v-if="isLoading"
@@ -151,7 +158,7 @@
           <button
             v-if="showPasskeyLogin"
             type="button"
-            class="btn btn-secondary w-full"
+            class="btn btn-secondary h-11 w-full"
             :disabled="authActionDisabled"
             @click="handlePasskeyLogin"
           >

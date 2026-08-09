@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 63 44" fill="none" role="img" aria-label="LD logo">
+  <path
+    d="m18 15-9 19h18"
+    stroke="currentColor"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M34 15h14c3.7 0 5.2 2.3 3.8 5.5l-4 8.8C46.5 32.3 44.1 34 40.8 34H27l7-19Z"
+    stroke="currentColor"
+    stroke-width="4"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+</svg>

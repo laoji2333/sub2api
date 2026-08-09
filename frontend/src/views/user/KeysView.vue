@@ -73,7 +73,7 @@
               </button>
             </div>
           </div>
-          <button @click="showCreateModal = true" class="btn btn-primary" data-tour="keys-create-btn">
+          <button @click="openCreateKeyModal" class="btn btn-primary" data-tour="keys-create-btn">
             <Icon name="plus" size="md" class="mr-2" />
             {{ t('keys.createKey') }}
           </button>
@@ -426,7 +426,7 @@
               :title="t('keys.noKeysYet')"
               :description="t('keys.createFirstKey')"
               :action-text="t('keys.createKey')"
-              @action="showCreateModal = true"
+              @action="openCreateKeyModal"
             />
           </template>
         </DataTable>
@@ -468,7 +468,7 @@
           <label class="input-label">{{ t('keys.groupLabel') }}</label>
           <Select
             v-model="formData.group_id"
-            :options="groupOptions"
+            :options="keyFormGroupOptions"
             :placeholder="t('keys.selectGroup')"
             :searchable="true"
             :search-placeholder="t('keys.searchGroup')"
@@ -488,6 +488,26 @@
                 :peak-rate-multiplier="(option as unknown as GroupOption).peakRateMultiplier"
               />
               <span v-else class="text-gray-400">{{ t('keys.selectGroup') }}</span>
+            </template>
+            <template #dropdown-header>
+              <div class="grid grid-cols-3 gap-1" data-test="key-group-platform-tabs">
+                <button
+                  v-for="tab in keyGroupPlatformTabs"
+                  :key="tab.value"
+                  type="button"
+                  :data-test="`key-group-platform-${tab.value}`"
+                  :class="[
+                    'flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors',
+                    selectedKeyGroupPlatform === tab.value
+                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-dark-300 dark:hover:bg-dark-700 dark:hover:text-gray-100'
+                  ]"
+                  @click.stop="selectKeyGroupPlatform(tab.value)"
+                >
+                  <PlatformIcon :platform="tab.value" size="sm" />
+                  <span class="truncate">{{ tab.label }}</span>
+                </button>
+              </div>
             </template>
             <template #option="{ option, selected }">
               <GroupOptionItem
@@ -1140,6 +1160,7 @@ import TablePageLayout from '@/components/layout/TablePageLayout.vue'
 	import EndpointPopover from '@/components/keys/EndpointPopover.vue'
 	import GroupBadge from '@/components/common/GroupBadge.vue'
 	import GroupOptionItem from '@/components/common/GroupOptionItem.vue'
+	import PlatformIcon from '@/components/common/PlatformIcon.vue'
 	import type { ApiKey, Group, PublicSettings, SubscriptionType, GroupPlatform, UpdateApiKeyRequest } from '@/types'
 import type { Column } from '@/components/common/types'
 import type { BatchApiKeyUsageStats } from '@/api/usage'
@@ -1149,6 +1170,11 @@ import {
   buildCcSwitchImportDeeplink,
   type CcSwitchClientType
 } from '@/utils/ccswitchImport'
+import {
+  filterKeyGroupsByPlatform,
+  getDefaultKeyGroupPlatform,
+  getKeyGroupPlatformTabs
+} from './keyGroupPlatformTabs'
 
 // Helper to format date for datetime-local input
 const formatDateTimeLocal = (isoDate: string): string => {
@@ -1424,6 +1450,20 @@ const groupOptions = computed(() =>
   }))
 )
 
+const selectedKeyGroupPlatform = ref<GroupPlatform>('openai')
+const keyGroupPlatformTabs = computed(() => getKeyGroupPlatformTabs(groups.value))
+const keyFormGroupOptions = computed(() =>
+  filterKeyGroupsByPlatform(groupOptions.value, selectedKeyGroupPlatform.value)
+)
+
+const selectKeyGroupPlatform = (platform: GroupPlatform) => {
+  selectedKeyGroupPlatform.value = platform
+  const selectedGroup = groups.value.find((group) => group.id === formData.value.group_id)
+  if (selectedGroup && selectedGroup.platform !== platform) {
+    formData.value.group_id = null
+  }
+}
+
 // Group dropdown search
 const groupSearchQuery = ref('')
 const filteredGroupOptions = computed(() => {
@@ -1557,8 +1597,17 @@ const handleSort = (key: string, order: 'asc' | 'desc') => {
   loadApiKeys()
 }
 
+const openCreateKeyModal = () => {
+  selectedKeyGroupPlatform.value = getDefaultKeyGroupPlatform(groups.value)
+  showCreateModal.value = true
+}
+
 const editKey = (key: ApiKey) => {
   selectedKey.value = key
+  selectedKeyGroupPlatform.value =
+    key.group?.platform ??
+    groups.value.find((group) => group.id === key.group_id)?.platform ??
+    getDefaultKeyGroupPlatform(groups.value)
   const hasIPRestriction = (key.ip_whitelist?.length > 0) || (key.ip_blacklist?.length > 0)
   const hasExpiration = !!key.expires_at
   formData.value = {
@@ -1787,6 +1836,7 @@ const closeModals = () => {
   showCreateModal.value = false
   showEditModal.value = false
   selectedKey.value = null
+  selectedKeyGroupPlatform.value = getDefaultKeyGroupPlatform(groups.value)
   formData.value = {
     name: '',
     group_id: null,

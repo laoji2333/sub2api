@@ -1,8 +1,8 @@
 <template>
-  <AuthLayout>
-    <div class="space-y-6">
+  <AuthLayout split>
+    <div class="space-y-7">
       <!-- Title -->
-      <div class="text-center">
+      <div class="text-center lg:text-left">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
           {{ t('auth.createAccount') }}
         </h2>
@@ -14,7 +14,7 @@
       <!-- Registration Disabled Message -->
       <div
         v-if="!registrationEnabled && settingsLoaded"
-        class="rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800/50 dark:bg-amber-900/20"
+        class="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 shadow-sm dark:border-amber-800/50 dark:bg-amber-900/20"
       >
         <div class="flex items-start gap-3">
           <div class="flex-shrink-0">
@@ -33,9 +33,13 @@
           <label for="email" class="input-label">
             {{ t('auth.emailLabel') }}
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="mail" size="md" class="text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="mail"
+                size="md"
+                class="text-gray-400 transition-colors group-focus-within:text-primary-500 dark:text-dark-500"
+              />
             </div>
             <input
               id="email"
@@ -45,7 +49,7 @@
               autofocus
               autocomplete="email"
               :disabled="registrationActionDisabled"
-              class="input pl-11"
+              class="input h-12 bg-white/80 pl-11 shadow-sm dark:bg-dark-900/70"
               :class="{ 'input-error': errors.email }"
               :placeholder="t('auth.emailPlaceholder')"
             />
@@ -57,9 +61,13 @@
           <label for="password" class="input-label">
             {{ t('auth.passwordLabel') }}
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
-              <Icon name="lock" size="md" class="text-gray-400 dark:text-dark-500" />
+              <Icon
+                name="lock"
+                size="md"
+                class="text-gray-400 transition-colors group-focus-within:text-primary-500 dark:text-dark-500"
+              />
             </div>
             <input
               id="password"
@@ -68,7 +76,7 @@
               required
               autocomplete="new-password"
               :disabled="registrationActionDisabled"
-              class="input pl-11 pr-11"
+              class="input h-12 bg-white/80 pl-11 pr-11 shadow-sm dark:bg-dark-900/70"
               :class="{ 'input-error': errors.password }"
               :placeholder="t('auth.createPasswordPlaceholder')"
             />
@@ -76,13 +84,13 @@
               type="button"
               :disabled="registrationActionDisabled"
               @click="showPassword = !showPassword"
-              class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-dark-300"
+              class="absolute inset-y-0 right-0 flex items-center rounded-r-xl px-3.5 text-gray-400 transition-colors hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500/30 dark:hover:text-dark-300"
             >
               <Icon v-if="showPassword" name="eyeOff" size="md" />
               <Icon v-else name="eye" size="md" />
             </button>
           </div>
-          <p class="input-hint">
+          <p class="input-hint mt-2">
             {{ t('auth.passwordHint') }}
           </p>
         </div>
@@ -92,7 +100,7 @@
           <label for="invitation_code" class="input-label">
             {{ t('auth.invitationCodeLabel') }}
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
               <Icon name="key" size="md" :class="invitationValidation.valid ? 'text-green-500' : 'text-gray-400 dark:text-dark-500'" />
             </div>
@@ -101,7 +109,7 @@
               v-model="formData.invitation_code"
               type="text"
               :disabled="registrationActionDisabled"
-              class="input pl-11 pr-10"
+              class="input h-12 bg-white/80 pl-11 pr-10 shadow-sm dark:bg-dark-900/70"
               :class="{
                 'border-green-500 focus:border-green-500 focus:ring-green-500': invitationValidation.valid,
                 'border-red-500 focus:border-red-500 focus:ring-red-500': invitationValidation.invalid || errors.invitation_code
@@ -125,7 +133,7 @@
           </div>
           <!-- Invitation code validation result -->
           <transition name="fade">
-            <div v-if="invitationValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
+            <div v-if="invitationValidation.valid" class="mt-2 flex items-center gap-2 rounded-xl border border-green-200/70 bg-green-50 px-3 py-2 dark:border-green-800/50 dark:bg-green-900/20">
               <Icon name="checkCircle" size="sm" class="text-green-600 dark:text-green-400" />
               <span class="text-sm text-green-700 dark:text-green-400">
                 {{ t('auth.invitationCodeValid') }}
@@ -140,7 +148,7 @@
             {{ t('auth.invitationCodeLabel') }}
             <span class="ml-1 text-xs font-normal text-gray-400 dark:text-dark-500">({{ t('common.optional') }})</span>
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
               <Icon name="key" size="md" class="text-gray-400 dark:text-dark-500" />
             </div>
@@ -149,7 +157,7 @@
               v-model="formData.aff_code"
               type="text"
               :disabled="registrationActionDisabled"
-              class="input pl-11"
+              class="input h-12 bg-white/80 pl-11 shadow-sm dark:bg-dark-900/70"
               :placeholder="t('auth.invitationCodePlaceholder')"
             />
           </div>
@@ -161,7 +169,7 @@
             {{ t('auth.promoCodeLabel') }}
             <span class="ml-1 text-xs font-normal text-gray-400 dark:text-dark-500">({{ t('common.optional') }})</span>
           </label>
-          <div class="relative">
+          <div class="group relative">
             <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5">
               <Icon name="gift" size="md" :class="promoValidation.valid ? 'text-green-500' : 'text-gray-400 dark:text-dark-500'" />
             </div>
@@ -170,7 +178,7 @@
               v-model="formData.promo_code"
               type="text"
               :disabled="registrationActionDisabled"
-              class="input pl-11 pr-10"
+              class="input h-12 bg-white/80 pl-11 pr-10 shadow-sm dark:bg-dark-900/70"
               :class="{
                 'border-green-500 focus:border-green-500 focus:ring-green-500': promoValidation.valid,
                 'border-red-500 focus:border-red-500 focus:ring-red-500': promoValidation.invalid
@@ -194,7 +202,7 @@
           </div>
           <!-- Promo code validation result -->
           <transition name="fade">
-            <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 dark:bg-green-900/20">
+            <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-xl border border-green-200/70 bg-green-50 px-3 py-2 dark:border-green-800/50 dark:bg-green-900/20">
               <Icon name="gift" size="sm" class="text-green-600 dark:text-green-400" />
               <span class="text-sm text-green-700 dark:text-green-400">
                 {{ t('auth.promoCodeValid', { amount: promoValidation.bonusAmount?.toFixed(2) }) }}
@@ -238,7 +246,7 @@
         <button
           type="submit"
           :disabled="registrationActionDisabled || (turnstileEnabled && !turnstileToken)"
-          class="btn btn-primary w-full"
+          class="btn btn-primary h-12 w-full text-base shadow-lg shadow-primary-500/20 transition-all hover:-translate-y-0.5 hover:shadow-primary-500/30"
         >
           <svg
             v-if="isLoading"
