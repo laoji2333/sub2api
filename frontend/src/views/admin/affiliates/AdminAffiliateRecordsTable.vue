@@ -133,8 +133,8 @@
           <OverviewStat :label="t('admin.affiliates.overview.rebateRate')" :value="formatPercent(selectedOverview.rebate_rate_percent)" />
           <OverviewStat :label="t('admin.affiliates.overview.invitedCount')" :value="String(selectedOverview.invited_count)" />
           <OverviewStat :label="t('admin.affiliates.overview.rebatedInviteeCount')" :value="String(selectedOverview.rebated_invitee_count)" />
-          <OverviewStat :label="t('admin.affiliates.overview.availableQuota')" :value="'$' + formatAmount(selectedOverview.available_quota)" />
-          <OverviewStat :label="t('admin.affiliates.overview.historyQuota')" :value="'$' + formatAmount(selectedOverview.history_quota)" />
+          <OverviewStat :label="t('admin.affiliates.overview.availableQuota')" :value="moneyDisplaySymbol + formatAmount(selectedOverview.available_quota)" />
+          <OverviewStat :label="t('admin.affiliates.overview.historyQuota')" :value="moneyDisplaySymbol + formatAmount(selectedOverview.history_quota)" />
         </div>
       </div>
     </BaseDialog>
@@ -153,6 +153,7 @@ import Icon from '@/components/icons/Icon.vue'
 import OrderStatusBadge from '@/components/payment/OrderStatusBadge.vue'
 import type { Column } from '@/components/common/types'
 import { useAppStore } from '@/stores/app'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { affiliatesAPI, type AffiliateInviteRecord, type AffiliateRebateRecord, type AffiliateTransferRecord, type AffiliateUserOverview, type ListAffiliateRecordsParams } from '@/api/admin/affiliates'
 import type { PaginatedResponse } from '@/types'
 import { extractI18nErrorMessage } from '@/utils/apiError'
@@ -167,6 +168,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 const loading = ref(false)
 const records = ref<AffiliateRecord[]>([])
 const filters = reactive({ search: '', start_at: '', end_at: '' })
@@ -364,7 +366,7 @@ const AmountText = defineComponent({
       class: amountProps.strong
         ? 'text-sm font-semibold text-emerald-600 dark:text-emerald-400'
         : 'text-sm text-gray-900 dark:text-white',
-    }, `$${formatAmount(amountProps.value)}`)
+    }, `${moneyDisplaySymbol.value}${formatAmount(amountProps.value)}`)
   },
 })
 

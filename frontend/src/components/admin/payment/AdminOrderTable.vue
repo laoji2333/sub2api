@@ -143,6 +143,7 @@ import Pagination from '@/components/common/Pagination.vue'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { statusBadgeClass, canRefund, formatOrderDateTime } from '@/components/payment/orderUtils'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { currencySymbol } from '@/components/payment/currency'
 
 const { t } = useI18n()
@@ -168,7 +169,7 @@ const emit = defineEmits<{
 
 const searchQuery = ref('')
 const filters = reactive({ status: '', payment_type: '', order_type: '' })
-const creditedAmountSymbol = currencySymbol('USD')
+const { moneyDisplaySymbol: creditedAmountSymbol } = useMoneyDisplay()
 
 function paymentAmountSymbol(order: PaymentOrder): string {
   return currencySymbol(order.currency)

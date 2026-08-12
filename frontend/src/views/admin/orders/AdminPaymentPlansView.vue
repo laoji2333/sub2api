@@ -92,13 +92,15 @@ import Icon from '@/components/icons/Icon.vue'
 import GroupBadge from '@/components/common/GroupBadge.vue'
 import PlanEditDialog from './PlanEditDialog.vue'
 import { currencySymbol } from '@/components/payment/currency'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { platformTextClass } from '@/utils/platformColors'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 function planCurrencySymbol(currency?: string): string {
-  return currencySymbol(currency || 'USD')
+  return currency ? currencySymbol(currency) : moneyDisplaySymbol.value
 }
 
 // ==================== Groups ====================

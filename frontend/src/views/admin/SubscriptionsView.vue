@@ -227,9 +227,9 @@
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.daily_usage_usd?.toFixed(2) || '0.00' }}
+                    {{ moneyDisplaySymbol }}{{ row.daily_usage_usd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.daily_limit_usd?.toFixed(2) }}
+                    {{ moneyDisplaySymbol }}{{ row.group?.daily_limit_usd?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="reset-info" v-if="row.daily_window_start">
@@ -264,9 +264,9 @@
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.weekly_usage_usd?.toFixed(2) || '0.00' }}
+                    {{ moneyDisplaySymbol }}{{ row.weekly_usage_usd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.weekly_limit_usd?.toFixed(2) }}
+                    {{ moneyDisplaySymbol }}{{ row.group?.weekly_limit_usd?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="reset-info" v-if="row.weekly_window_start">
@@ -301,9 +301,9 @@
                     ></div>
                   </div>
                   <span class="usage-amount">
-                    ${{ row.monthly_usage_usd?.toFixed(2) || '0.00' }}
+                    {{ moneyDisplaySymbol }}{{ row.monthly_usage_usd?.toFixed(2) || '0.00' }}
                     <span class="text-gray-400">/</span>
-                    ${{ row.group?.monthly_limit_usd?.toFixed(2) }}
+                    {{ moneyDisplaySymbol }}{{ row.group?.monthly_limit_usd?.toFixed(2) }}
                   </span>
                 </div>
                 <div class="reset-info" v-if="row.monthly_window_start">
@@ -765,6 +765,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { adminAPI } from '@/api/admin'
 import type { UserSubscription, Group, GroupPlatform, SubscriptionType } from '@/types'
 import type { SimpleUser } from '@/api/admin/usage'
@@ -791,6 +792,7 @@ import {
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 interface GroupOption {
   value: number

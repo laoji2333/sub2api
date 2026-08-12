@@ -2383,13 +2383,14 @@
             <div>
               <label class="input-label">{{ t('admin.accounts.quotaControl.windowCost.limit') }}</label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">{{ moneyDisplaySymbol }}</span>
                 <input
                   v-model.number="windowCostLimit"
                   type="number"
                   min="0"
                   step="1"
-                  class="input pl-7"
+                  class="input"
+                  :style="moneyInputPaddingStyle"
                   :placeholder="t('admin.accounts.quotaControl.windowCost.limitPlaceholder')"
                 />
               </div>
@@ -2398,13 +2399,14 @@
             <div>
               <label class="input-label">{{ t('admin.accounts.quotaControl.windowCost.stickyReserve') }}</label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">{{ moneyDisplaySymbol }}</span>
                 <input
                   v-model.number="windowCostStickyReserve"
                   type="number"
                   min="0"
                   step="1"
-                  class="input pl-7"
+                  class="input"
+                  :style="moneyInputPaddingStyle"
                   :placeholder="t('admin.accounts.quotaControl.windowCost.stickyReservePlaceholder')"
                 />
               </div>
@@ -3576,6 +3578,7 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { adminAPI } from '@/api/admin'
 import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import {
   useAccountOAuth,
   type AddMethod,
@@ -3687,6 +3690,7 @@ const emit = defineEmits<{
 }>()
 
 const appStore = useAppStore()
+const { moneyDisplaySymbol, moneyInputPaddingStyle } = useMoneyDisplay()
 
 // OAuth composables
 const oauth = useAccountOAuth() // For Anthropic OAuth

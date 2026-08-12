@@ -328,7 +328,7 @@
                   t("admin.groups.usageToday")
                 }}</span>
                 <span class="ml-1 font-medium text-gray-700 dark:text-gray-300"
-                  >${{
+                  >{{ moneyDisplaySymbol }}{{
                     formatCost(usageMap.get(row.id)?.today_cost ?? 0)
                   }}</span
                 >
@@ -338,7 +338,7 @@
                   t("admin.groups.usageTotal")
                 }}</span>
                 <span class="ml-1 font-medium text-gray-700 dark:text-gray-300"
-                  >${{
+                  >{{ moneyDisplaySymbol }}{{
                     formatCost(usageMap.get(row.id)?.total_cost ?? 0)
                   }}</span
                 >
@@ -910,7 +910,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">1K ($)</label>
+              <label class="input-label">1K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="createForm.image_price_1k"
                 type="number"
@@ -921,7 +921,7 @@
               />
             </div>
             <div>
-              <label class="input-label">2K ($)</label>
+              <label class="input-label">2K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="createForm.image_price_2k"
                 type="number"
@@ -932,7 +932,7 @@
               />
             </div>
             <div>
-              <label class="input-label">4K ($)</label>
+              <label class="input-label">4K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="createForm.image_price_4k"
                 type="number"
@@ -1054,7 +1054,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">480p ($/s)</label>
+              <label class="input-label">480p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="createForm.video_price_480p"
                 type="number"
@@ -1065,7 +1065,7 @@
               />
             </div>
             <div>
-              <label class="input-label">720p ($/s)</label>
+              <label class="input-label">720p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="createForm.video_price_720p"
                 type="number"
@@ -1076,7 +1076,7 @@
               />
             </div>
             <div>
-              <label class="input-label">1080p ($/s)</label>
+              <label class="input-label">1080p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="createForm.video_price_1080p"
                 type="number"
@@ -1112,7 +1112,7 @@
                   class="block"
                 >
                   <span class="mb-1 block text-xs text-gray-500 dark:text-gray-400">
-                    {{ resolution.label }} ($/s)
+                    {{ resolution.label }} ({{ moneyDisplaySymbol }}/s)
                   </span>
                   <input
                     v-model.number="createForm.video_model_prices[family.key][resolution.key]"
@@ -2617,7 +2617,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">1K ($)</label>
+              <label class="input-label">1K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="editForm.image_price_1k"
                 type="number"
@@ -2628,7 +2628,7 @@
               />
             </div>
             <div>
-              <label class="input-label">2K ($)</label>
+              <label class="input-label">2K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="editForm.image_price_2k"
                 type="number"
@@ -2639,7 +2639,7 @@
               />
             </div>
             <div>
-              <label class="input-label">4K ($)</label>
+              <label class="input-label">4K ({{ moneyDisplaySymbol }})</label>
               <input
                 v-model.number="editForm.image_price_4k"
                 type="number"
@@ -2761,7 +2761,7 @@
           </div>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <label class="input-label">480p ($/s)</label>
+              <label class="input-label">480p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="editForm.video_price_480p"
                 type="number"
@@ -2772,7 +2772,7 @@
               />
             </div>
             <div>
-              <label class="input-label">720p ($/s)</label>
+              <label class="input-label">720p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="editForm.video_price_720p"
                 type="number"
@@ -2783,7 +2783,7 @@
               />
             </div>
             <div>
-              <label class="input-label">1080p ($/s)</label>
+              <label class="input-label">1080p ({{ moneyDisplaySymbol }}/s)</label>
               <input
                 v-model.number="editForm.video_price_1080p"
                 type="number"
@@ -2819,7 +2819,7 @@
                   class="block"
                 >
                   <span class="mb-1 block text-xs text-gray-500 dark:text-gray-400">
-                    {{ resolution.label }} ($/s)
+                    {{ resolution.label }} ({{ moneyDisplaySymbol }}/s)
                   </span>
                   <input
                     v-model.number="editForm.video_model_prices[family.key][resolution.key]"
@@ -4350,6 +4350,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "@/stores/app";
+import { useMoneyDisplay } from "@/composables/useMoneyDisplay";
 import { useOnboardingStore } from "@/stores/onboarding";
 import { adminAPI } from "@/api/admin";
 import type {
@@ -4432,6 +4433,7 @@ import {
 
 const { t } = useI18n();
 const appStore = useAppStore();
+const { moneyDisplaySymbol } = useMoneyDisplay();
 const onboardingStore = useOnboardingStore();
 
 const ALWAYS_VISIBLE_COLUMNS = new Set(["name", "actions"]);
@@ -5397,7 +5399,7 @@ const formatImagePricePreview = (value: number | string | null | undefined) => {
   if (!Number.isFinite(price) || price < 0) {
     return t("admin.groups.imagePricing.notConfigured");
   }
-  return `$${price.toFixed(6).replace(/0+$/, "").replace(/\.$/, "")}`;
+  return `${moneyDisplaySymbol.value}${price.toFixed(6).replace(/0+$/, "").replace(/\.$/, "")}`;
 };
 
 const formatVideoPricePreview = (value: number | string | null | undefined) => {
@@ -5408,7 +5410,7 @@ const formatVideoPricePreview = (value: number | string | null | undefined) => {
   if (!Number.isFinite(price) || price < 0) {
     return t("admin.groups.videoPricing.notConfigured");
   }
-  return `$${price.toFixed(6).replace(/0+$/, "").replace(/\.$/, "")}`;
+  return `${moneyDisplaySymbol.value}${price.toFixed(6).replace(/0+$/, "").replace(/\.$/, "")}`;
 };
 
 const buildImageFinalPricePreview = (form: ImagePricingFormState) => {
@@ -5606,7 +5608,7 @@ const formatCost = (cost: number): string => {
 };
 
 const formatUsd = (cost: number | null | undefined): string =>
-  `$${formatCost(cost ?? 0)}`;
+  `${moneyDisplaySymbol.value}${formatCost(cost ?? 0)}`;
 
 const getQuotaUsageClass = (
   used: number,

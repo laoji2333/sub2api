@@ -56,7 +56,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import type { WindowStats } from '@/types'
-import { formatNumber, formatCurrency } from '@/utils/format'
+import { formatNumber } from '@/utils/format'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 
 const props = withDefaults(
   defineProps<{
@@ -72,6 +73,10 @@ const props = withDefaults(
 )
 
 const { t } = useI18n()
+const { formatMoney } = useMoneyDisplay()
+
+const formatCurrency = (value: number): string =>
+  formatMoney(value, value > 0 && value < 0.01 ? 6 : 2)
 
 // Format large token numbers (e.g., 1234567 -> 1.23M)
 const formatTokens = (tokens: number): string => {

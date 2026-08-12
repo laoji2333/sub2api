@@ -481,14 +481,14 @@
               {{ formatKeyTokens }}
             </span>
             <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
-              A ${{ formatKeyCost }}
+              A {{ moneyDisplaySymbol }}{{ formatKeyCost }}
             </span>
             <span
               v-if="todayStats.user_cost != null"
               class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
               :title="t('usage.userBilled')"
             >
-              U ${{ formatKeyUserCost }}
+              U {{ moneyDisplaySymbol }}{{ formatKeyUserCost }}
             </span>
           </div>
         </div>
@@ -561,14 +561,14 @@
             {{ formatKeyTokens }}
           </span>
           <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
-            A ${{ formatKeyCost }}
+            A {{ moneyDisplaySymbol }}{{ formatKeyCost }}
           </span>
           <span
             v-if="todayStats.user_cost != null"
             class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
             :title="t('usage.userBilled')"
           >
-            U ${{ formatKeyUserCost }}
+            U {{ moneyDisplaySymbol }}{{ formatKeyUserCost }}
           </span>
         </div>
       </div>
@@ -621,6 +621,7 @@ import type { Account, AccountUsageInfo, GeminiCredentials, WindowStats } from '
 import { buildOpenAIUsageRefreshKey } from '@/utils/accountUsageRefresh'
 import { enqueueUsageRequest } from '@/utils/usageLoadQueue'
 import { formatCompactNumber } from '@/utils/format'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import UsageProgressBar from './UsageProgressBar.vue'
 import AccountQuotaInfo from './AccountQuotaInfo.vue'
 import OpenAIQuotaResetCell from './OpenAIQuotaResetCell.vue'
@@ -661,6 +662,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 const desktopViewportQuery = '(min-width: 768px)'
 
 const unmounted = ref(false)

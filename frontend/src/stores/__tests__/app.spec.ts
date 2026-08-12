@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useAppStore } from '@/stores/app'
+import { setMoneyDisplaySymbol, useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { getPublicSettings } from '@/api/auth'
 import type { PublicSettings } from '@/types'
 
@@ -78,6 +79,7 @@ describe('useAppStore', () => {
     vi.useFakeTimers()
     localStorage.clear()
     vi.mocked(getPublicSettings).mockReset()
+    setMoneyDisplaySymbol('$')
     // 清除 window.__APP_CONFIG__
     delete (window as any).__APP_CONFIG__
   })
@@ -374,6 +376,18 @@ describe('useAppStore', () => {
 
       await expect(store.fetchPublicSettings()).resolves.toEqual(updated)
       expect(getPublicSettings).toHaveBeenCalledTimes(2)
+    })
+
+    it('同步公开配置中的金额显示符号', async () => {
+      vi.mocked(getPublicSettings).mockResolvedValueOnce(createPublicSettings({
+        money_display_symbol: '¥'
+      }))
+      const store = useAppStore()
+
+      await store.fetchPublicSettings()
+
+      expect(store.moneyDisplaySymbol).toBe('¥')
+      expect(useMoneyDisplay().formatMoney(12.3)).toBe('¥12.30')
     })
 
     it('并发请求失败时所有调用得到 null，且不会标记设置已加载', async () => {

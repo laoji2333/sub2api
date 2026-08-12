@@ -8,6 +8,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { formatScaled } from '@/utils/pricing'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
+
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 const props = withDefaults(
   defineProps<{
@@ -20,6 +23,6 @@ const props = withDefaults(
 )
 
 const display = computed(() =>
-  props.value == null ? '-' : `${formatScaled(props.value, props.scale)} ${props.unit}`
+  props.value == null ? '-' : `${formatScaled(props.value, props.scale, 0, moneyDisplaySymbol.value)} ${props.unit}`
 )
 </script>

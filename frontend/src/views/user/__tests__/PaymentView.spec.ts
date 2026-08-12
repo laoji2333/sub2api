@@ -1,9 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, shallowMount } from '@vue/test-utils'
 import PaymentView from '../PaymentView.vue'
 import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/components/payment/paymentFlow'
-import { formatPaymentAmount } from '@/components/payment/currency'
+import { currencySymbol, formatPaymentAmount } from '@/components/payment/currency'
+import AmountInput from '@/components/payment/AmountInput.vue'
 import SubscriptionPlanCard from '@/components/payment/SubscriptionPlanCard.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/types/payment'
 
 const routeState = vi.hoisted(() => ({
@@ -22,6 +24,8 @@ const showInfo = vi.hoisted(() => vi.fn())
 const showWarning = vi.hoisted(() => vi.fn())
 const getCheckoutInfo = vi.hoisted(() => vi.fn())
 const bridgeInvoke = vi.hoisted(() => vi.fn())
+
+afterEach(() => setMoneyDisplaySymbol('$'))
 
 vi.mock('vue-router', async () => {
   const actual = await vi.importActual<typeof import('vue-router')>('vue-router')
@@ -276,6 +280,51 @@ async function mountSubscriptionPlanList(planCount: number) {
   await flushPromises()
   return wrapper
 }
+
+async function mountRecharge(currency: string) {
+  vi.useRealTimers()
+  routeState.path = '/purchase'
+  routeState.query = {}
+  routerReplace.mockReset().mockResolvedValue(undefined)
+  routerPush.mockReset().mockResolvedValue(undefined)
+  routerResolve.mockClear()
+  createOrder.mockReset()
+  refreshUser.mockReset()
+  fetchActiveSubscriptions.mockReset().mockResolvedValue(undefined)
+  showError.mockReset()
+  showInfo.mockReset()
+  showWarning.mockReset()
+  getCheckoutInfo.mockReset().mockResolvedValue(checkoutInfoWithPlansFixture({ method: { currency } }))
+  bridgeInvoke.mockReset()
+  window.localStorage.clear()
+  ;(window as Window & { WeixinJSBridge?: { invoke: typeof bridgeInvoke } }).WeixinJSBridge = undefined
+
+  const wrapper = shallowMount(PaymentView, {
+    global: {
+      stubs: {
+        AppLayout: {
+          template: '<div><slot /></div>',
+        },
+        Teleport: true,
+        Transition: false,
+      },
+    },
+  })
+  await flushPromises()
+  await flushPromises()
+  return wrapper
+}
+
+describe('PaymentView recharge currency display', () => {
+  it('uses the gateway currency for payment input and the site symbol for balance', async () => {
+    setMoneyDisplaySymbol('TOK')
+
+    const wrapper = await mountRecharge('HKD')
+
+    expect(wrapper.findComponent(AmountInput).props('currencySymbol')).toBe(currencySymbol('HKD'))
+    expect(wrapper.text()).toContain('payment.currentBalance: TOK0.00')
+  })
+})
 
 describe('PaymentView subscription plan grid', () => {
   it.each([3, 4, 6])('keeps %i plans on the existing mobile/tablet/desktop grid', async (planCount) => {

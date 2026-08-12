@@ -13,14 +13,14 @@
           {{ formatTokens }}
         </span>
         <span class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800" :title="t('usage.accountBilled')">
-          A ${{ formatAccountCost }}
+          A {{ moneyDisplaySymbol }}{{ formatAccountCost }}
         </span>
         <span
           v-if="windowStats?.user_cost != null"
           class="rounded bg-gray-100 px-1.5 py-0.5 dark:bg-gray-800"
           :title="t('usage.userBilled')"
         >
-          U ${{ formatUserCost }}
+          U {{ moneyDisplaySymbol }}{{ formatUserCost }}
         </span>
       </div>
     </div>
@@ -61,6 +61,7 @@ import { useIntervalFn } from '@vueuse/core'
 import { useI18n } from 'vue-i18n'
 import type { WindowStats } from '@/types'
 import { formatCompactNumber } from '@/utils/format'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 
 const props = defineProps<{
   label: string
@@ -73,6 +74,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 // Reactive clock for countdown — only runs when a reset time is shown,
 // to avoid creating many idle timers across large account lists.

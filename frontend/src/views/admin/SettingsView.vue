@@ -6237,6 +6237,23 @@
                     {{ t("admin.settings.site.siteSubtitleHint") }}
                   </p>
                 </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.site.moneyDisplaySymbol") }}
+                  </label>
+                  <input
+                    v-model="form.money_display_symbol"
+                    type="text"
+                    maxlength="8"
+                    class="input"
+                    :placeholder="t('admin.settings.site.moneyDisplaySymbolPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.moneyDisplaySymbolHint") }}
+                  </p>
+                </div>
               </div>
 
               <!-- API Base URL -->
@@ -8464,14 +8481,15 @@
                 <div class="relative">
                   <span
                     class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                    >$</span
+                    >{{ moneyDisplaySymbol }}</span
                   >
                   <input
                     v-model.number="form.balance_low_notify_threshold"
                     type="number"
                     min="0"
                     step="0.01"
-                    class="input pl-7"
+                    class="input"
+                    :style="moneyInputPaddingStyle"
                   />
                 </div>
                 <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
@@ -8714,6 +8732,7 @@ import TotpStepUpDialog from "@/components/auth/TotpStepUpDialog.vue";
 import { affiliatesAPI, type AffiliateAdminEntry, type SimpleUser as AffiliateSimpleUser } from "@/api/admin/affiliates";
 import { extractApiErrorMessage, extractI18nErrorMessage } from "@/utils/apiError";
 import { useAppStore } from "@/stores";
+import { useMoneyDisplay } from "@/composables/useMoneyDisplay";
 import { useAdminSettingsStore } from "@/stores/adminSettings";
 import { normalizeVisibleMethod } from "@/components/payment/paymentFlow";
 import {
@@ -8731,6 +8750,7 @@ import {
 
 const { t, locale } = useI18n();
 const appStore = useAppStore();
+const { moneyDisplaySymbol, moneyInputPaddingStyle } = useMoneyDisplay();
 // 关闭 step-up 开关是敏感操作：后端返回 STEP_UP_REQUIRED 时弹 TOTP 码重试
 const settingsStepUp = useStepUp();
 const adminSettingsStore = useAdminSettingsStore();
@@ -9450,6 +9470,7 @@ const form = reactive<SettingsForm>({
   site_name: "Sub2API",
   site_logo: "",
   site_subtitle: "Subscription to API Conversion Platform",
+  money_display_symbol: "$",
   api_base_url: "",
   contact_info: "",
   doc_url: "",
@@ -11075,6 +11096,7 @@ async function saveSettings() {
       site_name: form.site_name,
       site_logo: form.site_logo,
       site_subtitle: form.site_subtitle,
+      money_display_symbol: form.money_display_symbol.trim() || "$",
       api_base_url: form.api_base_url,
       contact_info: form.contact_info,
       doc_url: form.doc_url,

@@ -13,6 +13,7 @@ import {
   type ReleaseInfo
 } from '@/api/admin/system'
 import { getPublicSettings as fetchPublicSettingsAPI } from '@/api/auth'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 export const useAppStore = defineStore('app', () => {
   // ==================== State ====================
@@ -28,6 +29,7 @@ export const useAppStore = defineStore('app', () => {
   const publicSettingsLoading = ref<boolean>(false)
   const siteName = ref<string>('Sub2API')
   const siteLogo = ref<string>('')
+  const moneyDisplaySymbol = ref<string>('$')
   const siteVersion = ref<string>('')
   const contactInfo = ref<string>('')
   const apiBaseUrl = ref<string>('')
@@ -296,6 +298,8 @@ export const useAppStore = defineStore('app', () => {
     cachedPublicSettings.value = config
     siteName.value = config.site_name || 'Sub2API'
     siteLogo.value = config.site_logo || ''
+    moneyDisplaySymbol.value = config.money_display_symbol?.trim() || '$'
+    setMoneyDisplaySymbol(moneyDisplaySymbol.value)
     siteVersion.value = config.version || ''
     contactInfo.value = config.contact_info || ''
     apiBaseUrl.value = config.api_base_url || ''
@@ -342,6 +346,7 @@ export const useAppStore = defineStore('app', () => {
         site_name: siteName.value,
         site_logo: siteLogo.value,
         site_subtitle: '',
+        money_display_symbol: moneyDisplaySymbol.value,
         api_base_url: apiBaseUrl.value,
         contact_info: contactInfo.value,
         doc_url: docUrl.value,
@@ -445,6 +450,7 @@ export const useAppStore = defineStore('app', () => {
     publicSettingsLoaded,
     siteName,
     siteLogo,
+    moneyDisplaySymbol,
     siteVersion,
     contactInfo,
     apiBaseUrl,

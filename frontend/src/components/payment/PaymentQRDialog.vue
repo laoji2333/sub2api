@@ -81,6 +81,7 @@ import { paymentAPI } from '@/api/payment'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 import { getPaymentPopupFeatures, isBuiltInAlipayMethod, isBuiltInWxpayMethod } from '@/components/payment/providerConfig'
 import type { PaymentOrder } from '@/types/payment'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { currencySymbol } from '@/components/payment/currency'
 import QRCode from 'qrcode'
 import alipayIcon from '@/assets/icons/alipay.svg'
@@ -112,7 +113,7 @@ const expired = ref(false)
 const cancelling = ref(false)
 const success = ref(false)
 const paidOrder = ref<PaymentOrder | null>(null)
-const creditedAmountSymbol = currencySymbol('USD')
+const { moneyDisplaySymbol: creditedAmountSymbol } = useMoneyDisplay()
 
 let pollTimer: ReturnType<typeof setInterval> | null = null
 let countdownTimer: ReturnType<typeof setInterval> | null = null

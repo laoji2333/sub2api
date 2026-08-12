@@ -2243,13 +2243,14 @@
             <div>
               <label class="input-label">{{ t('admin.accounts.quotaControl.windowCost.limit') }}</label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">{{ moneyDisplaySymbol }}</span>
                 <input
                   v-model.number="windowCostLimit"
                   type="number"
                   min="0"
                   step="1"
-                  class="input pl-7"
+                  class="input"
+                  :style="moneyInputPaddingStyle"
                   :placeholder="t('admin.accounts.quotaControl.windowCost.limitPlaceholder')"
                 />
               </div>
@@ -2258,13 +2259,14 @@
             <div>
               <label class="input-label">{{ t('admin.accounts.quotaControl.windowCost.stickyReserve') }}</label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">$</span>
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400">{{ moneyDisplaySymbol }}</span>
                 <input
                   v-model.number="windowCostStickyReserve"
                   type="number"
                   min="0"
                   step="1"
-                  class="input pl-7"
+                  class="input"
+                  :style="moneyInputPaddingStyle"
                   :placeholder="t('admin.accounts.quotaControl.windowCost.stickyReservePlaceholder')"
                 />
               </div>
@@ -2716,6 +2718,7 @@ import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { adminAPI } from '@/api/admin'
 import { useQuotaNotifyState } from '@/composables/useQuotaNotifyState'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import type {
   Account,
   Proxy,
@@ -2790,6 +2793,7 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { moneyDisplaySymbol, moneyInputPaddingStyle } = useMoneyDisplay()
 const authStore = useAuthStore()
 
 // Spark 影子账号(parent_account_id 非空):代理恒继承母账号,不可独立编辑(外审 B/P1),

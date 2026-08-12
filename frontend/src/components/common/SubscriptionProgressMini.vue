@@ -180,11 +180,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import Icon from '@/components/icons/Icon.vue'
 import { useSubscriptionStore } from '@/stores'
 import type { UserSubscription } from '@/types'
 
 const { t } = useI18n()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 const subscriptionStore = useSubscriptionStore()
 
@@ -254,7 +256,7 @@ function getProgressWidth(used: number | undefined, limit: number | null | undef
 function formatUsage(used: number | undefined, limit: number | null | undefined): string {
   const usedValue = (used || 0).toFixed(2)
   const limitValue = limit?.toFixed(2) || '∞'
-  return `$${usedValue}/$${limitValue}`
+  return `${moneyDisplaySymbol.value}${usedValue}/${moneyDisplaySymbol.value}${limitValue}`
 }
 
 function formatDaysRemaining(expiresAt: string): string {

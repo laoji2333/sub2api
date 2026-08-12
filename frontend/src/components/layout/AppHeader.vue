@@ -254,6 +254,7 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
@@ -266,6 +267,7 @@ const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
 const appStore = useAppStore()
+const { formatMoney } = useMoneyDisplay()
 const authStore = useAuthStore()
 const adminSettingsStore = useAdminSettingsStore()
 const onboardingStore = useOnboardingStore()
@@ -362,8 +364,7 @@ function handleReplayGuide() {
 }
 
 function formatHeaderMoney(value: number) {
-  if (!Number.isFinite(value)) return '$0.00'
-  return `$${value.toFixed(2)}`
+  return formatMoney(value)
 }
 
 function handleClickOutside(event: MouseEvent) {

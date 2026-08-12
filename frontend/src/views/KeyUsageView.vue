@@ -420,6 +420,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { buildGatewayUrl } from '@/api/client'
@@ -428,6 +429,7 @@ import { sanitizeUrl } from '@/utils/url'
 
 const { t, locale } = useI18n()
 const appStore = useAppStore()
+const { prefixMoney } = useMoneyDisplay()
 
 // ==================== Site Settings (same as HomeView) ====================
 
@@ -831,7 +833,7 @@ const showDailyUsage = computed(() => Boolean(resultData.value && Array.isArray(
 
 function usd(value: number | null | undefined): string {
   if (value == null || value < 0) return '-'
-  return '$' + Number(value).toFixed(2)
+  return prefixMoney(Number(value).toFixed(2))
 }
 
 function fmtNum(val: number | null | undefined): string {

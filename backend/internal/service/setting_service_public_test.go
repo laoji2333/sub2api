@@ -101,6 +101,19 @@ func TestSettingService_GetPublicSettings_ExposesCompactHomeEnabled(t *testing.T
 	require.False(t, missingSettings.CompactHomeEnabled)
 }
 
+func TestSettingService_GetPublicSettings_ExposesMoneyDisplaySymbol(t *testing.T) {
+	configured, err := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeyMoneyDisplaySymbol: "¥",
+	}}, &config.Config{}).GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "¥", configured.MoneyDisplaySymbol)
+
+	missing, err := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).
+		GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "$", missing.MoneyDisplaySymbol)
+}
+
 func TestSettingService_ChannelMonitorHideThroughputDefaultsToPrivate(t *testing.T) {
 	missing := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).GetChannelMonitorRuntime(context.Background())
 	require.True(t, missing.HideThroughput)

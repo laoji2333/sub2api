@@ -62,7 +62,7 @@
           </div>
           <div class="mt-2 flex justify-between text-sm">
             <span class="text-gray-500 dark:text-gray-400">{{ t('payment.orders.amount') }}</span>
-            <span class="text-gray-900 dark:text-white">${{ refundTarget.amount.toFixed(2) }}</span>
+            <span class="text-gray-900 dark:text-white">{{ moneyDisplaySymbol }}{{ refundTarget.amount.toFixed(2) }}</span>
           </div>
         </div>
         <div>
@@ -85,6 +85,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { useAppStore } from '@/stores'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { paymentAPI } from '@/api/payment'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 import type { PaymentOrder } from '@/types/payment'
@@ -98,6 +99,7 @@ import OrderTable from '@/components/payment/OrderTable.vue'
 const { t } = useI18n()
 const router = useRouter()
 const appStore = useAppStore()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 const loading = ref(false)
 const actionLoading = ref(false)

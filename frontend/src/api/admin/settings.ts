@@ -469,6 +469,7 @@ export interface SystemSettings {
   site_name: string;
   site_logo: string;
   site_subtitle: string;
+  money_display_symbol: string;
   api_base_url: string;
   contact_info: string;
   doc_url: string;
@@ -806,6 +807,7 @@ export interface UpdateSettingsRequest {
   site_name?: string;
   site_logo?: string;
   site_subtitle?: string;
+  money_display_symbol?: string;
   api_base_url?: string;
   contact_info?: string;
   doc_url?: string;

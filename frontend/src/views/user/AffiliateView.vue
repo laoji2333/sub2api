@@ -149,11 +149,13 @@ import type { UserAffiliateDetail } from '@/types'
 import { useAppStore } from '@/stores/app'
 import { useAuthStore } from '@/stores/auth'
 import { useClipboard } from '@/composables/useClipboard'
-import { formatCurrency, formatDateTime } from '@/utils/format'
+import { formatDateTime } from '@/utils/format'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { extractApiErrorMessage } from '@/utils/apiError'
 
 const { t } = useI18n()
 const appStore = useAppStore()
+const { formatMoney: formatCurrency } = useMoneyDisplay()
 const authStore = useAuthStore()
 const { copyToClipboard } = useClipboard()
 

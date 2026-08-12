@@ -102,7 +102,8 @@
             step="0.01"
             min="0.01"
             :max="maxRefundable"
-            class="input pl-7"
+            class="input"
+            :style="creditedAmountPaddingStyle"
             required
           />
         </div>
@@ -169,6 +170,7 @@ import { useI18n } from 'vue-i18n'
 import BaseDialog from '@/components/common/BaseDialog.vue'
 import type { PaymentOrder } from '@/types/payment'
 import { formatOrderDateTime } from '@/components/payment/orderUtils'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { currencySymbol } from '@/components/payment/currency'
 
 const { t } = useI18n()
@@ -187,7 +189,10 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const creditedAmountSymbol = currencySymbol('USD')
+const {
+  moneyDisplaySymbol: creditedAmountSymbol,
+  moneyInputPaddingStyle: creditedAmountPaddingStyle,
+} = useMoneyDisplay()
 
 const paymentAmountSymbol = computed(() => currencySymbol(props.order?.currency))
 

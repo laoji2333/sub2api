@@ -593,6 +593,9 @@ export default {
         siteSubtitle: 'Site Subtitle',
         siteSubtitlePlaceholder: 'Subscription to API Conversion Platform',
         siteSubtitleHint: 'Displayed on login and register pages',
+        moneyDisplaySymbol: 'Money Display Symbol',
+        moneyDisplaySymbolHint: 'Changes only the symbol shown for site balance, quota, usage, and prices; no currency conversion is performed',
+        moneyDisplaySymbolPlaceholder: 'e.g. ¥ or ￥',
         apiBaseUrl: 'API Base URL',
         apiBaseUrlPlaceholder: 'https://api.example.com',
         apiBaseUrlHint:

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"math"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -215,6 +216,41 @@ func TestSettingService_AffiliateAdminRechargeSetting(t *testing.T) {
 		require.NoError(t, err)
 		require.Equal(t, "true", repo.updates[SettingKeyAffiliateAdminRechargeEnabled])
 	})
+}
+
+func TestSettingService_UpdateSettings_PersistsMoneyDisplaySymbol(t *testing.T) {
+	for name, tc := range map[string]struct {
+		input string
+		want  string
+	}{
+		"configured": {input: " ¥ ", want: "¥"},
+		"empty":      {input: "", want: "$"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &settingUpdateRepoStub{}
+			svc := NewSettingService(repo, &config.Config{})
+			settings := &SystemSettings{MoneyDisplaySymbol: tc.input}
+
+			err := svc.UpdateSettings(context.Background(), settings)
+
+			require.NoError(t, err)
+			require.Equal(t, tc.want, repo.updates[SettingKeyMoneyDisplaySymbol])
+			require.Equal(t, tc.want, settings.MoneyDisplaySymbol)
+		})
+	}
+}
+
+func TestSettingService_UpdateSettings_RejectsOverlongMoneyDisplaySymbol(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	svc := NewSettingService(repo, &config.Config{})
+
+	err := svc.UpdateSettings(context.Background(), &SystemSettings{
+		MoneyDisplaySymbol: strings.Repeat("¥", moneyDisplaySymbolMaxRunes+1),
+	})
+
+	require.Error(t, err)
+	require.ErrorContains(t, err, "at most 8 characters")
+	require.Nil(t, repo.updates)
 }
 
 func (s *defaultSubGroupReaderStub) GetByID(ctx context.Context, id int64) (*Group, error) {

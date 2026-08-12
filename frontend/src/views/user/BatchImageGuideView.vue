@@ -763,6 +763,7 @@ import SearchInput from '@/components/common/SearchInput.vue'
 import Icon from '@/components/icons/Icon.vue'
 import { useClipboard } from '@/composables/useClipboard'
 import { getPersistedPageSize, setPersistedPageSize } from '@/composables/usePersistedPageSize'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { useAppStore } from '@/stores/app'
 import { keysAPI } from '@/api'
 import {
@@ -835,6 +836,7 @@ const outputCountOptions = Array.from({ length: BATCH_IMAGE_MAX_OUTPUTS_PER_ITEM
 const batchPageSizeOptions: SelectOption[] = [20, 50, 100].map(size => ({ value: size, label: String(size) }))
 
 const appStore = useAppStore()
+const { formatMoney: formatDisplayMoney } = useMoneyDisplay()
 const { copyToClipboard } = useClipboard()
 const { t, locale } = useI18n()
 
@@ -2385,8 +2387,7 @@ function friendlyItemError(error: BatchImageItem['error']) {
 }
 
 function formatMoney(value: number | null | undefined) {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) return '$0.00'
-  return `$${Number(value).toFixed(2)}`
+  return formatDisplayMoney(Number(value ?? 0))
 }
 
 function terminalZeroCost(job: Pick<BatchImageJob, 'status' | 'actual_cost'>) {

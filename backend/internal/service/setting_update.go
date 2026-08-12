@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/antigravity"
@@ -23,6 +24,8 @@ import (
 //
 // A nil or empty set keeps whole-document semantics: every key is written.
 type OmittedSettingKeys map[string]struct{}
+
+const moneyDisplaySymbolMaxRunes = 8
 
 func (o OmittedSettingKeys) dropFrom(updates map[string]string) {
 	for key := range o {
@@ -339,6 +342,15 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	updates[SettingKeySiteName] = settings.SiteName
 	updates[SettingKeySiteLogo] = settings.SiteLogo
 	updates[SettingKeySiteSubtitle] = settings.SiteSubtitle
+	moneyDisplaySymbol := strings.TrimSpace(settings.MoneyDisplaySymbol)
+	if moneyDisplaySymbol == "" {
+		moneyDisplaySymbol = "$"
+	}
+	if utf8.RuneCountInString(moneyDisplaySymbol) > moneyDisplaySymbolMaxRunes {
+		return nil, infraerrors.BadRequest("INVALID_MONEY_DISPLAY_SYMBOL", "money display symbol must be at most 8 characters")
+	}
+	settings.MoneyDisplaySymbol = moneyDisplaySymbol
+	updates[SettingKeyMoneyDisplaySymbol] = moneyDisplaySymbol
 	updates[SettingKeyAPIBaseURL] = settings.APIBaseURL
 	updates[SettingKeyContactInfo] = settings.ContactInfo
 	updates[SettingKeyDocURL] = settings.DocURL

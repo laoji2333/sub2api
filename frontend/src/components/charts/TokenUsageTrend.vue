@@ -21,6 +21,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -48,6 +49,7 @@ ChartJS.register(
 )
 
 const { t } = useI18n()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 
 const props = defineProps<{
   trendData: TrendDataPoint[]
@@ -155,7 +157,7 @@ const lineOptions = computed(() => ({
           const dataIndex = tooltipItems[0]?.dataIndex
           if (dataIndex !== undefined && props.trendData[dataIndex]) {
             const data = props.trendData[dataIndex]
-            return `Actual: $${formatCost(data.actual_cost)} | Standard: $${formatCost(data.cost)}`
+            return `Actual: ${moneyDisplaySymbol.value}${formatCost(data.actual_cost)} | Standard: ${moneyDisplaySymbol.value}${formatCost(data.cost)}`
           }
           return ''
         }

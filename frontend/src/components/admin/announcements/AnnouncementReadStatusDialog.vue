@@ -35,7 +35,7 @@
         </template>
 
         <template #cell-balance="{ value }">
-          <span class="font-medium text-gray-900 dark:text-white">${{ Number(value ?? 0).toFixed(2) }}</span>
+          <span class="font-medium text-gray-900 dark:text-white">{{ moneyDisplaySymbol }}{{ Number(value ?? 0).toFixed(2) }}</span>
         </template>
 
         <template #cell-eligible="{ value }">
@@ -73,6 +73,7 @@
 import { computed, onUnmounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import { adminAPI } from '@/api/admin'
 import { formatDateTime } from '@/utils/format'
 import type { AnnouncementUserReadStatus } from '@/types'
@@ -85,6 +86,7 @@ import Pagination from '@/components/common/Pagination.vue'
 import Icon from '@/components/icons/Icon.vue'
 
 const { t } = useI18n()
+const { moneyDisplaySymbol } = useMoneyDisplay()
 const appStore = useAppStore()
 
 const props = defineProps<{

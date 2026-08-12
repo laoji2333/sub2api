@@ -205,7 +205,7 @@
             <div v-if="promoValidation.valid" class="mt-2 flex items-center gap-2 rounded-xl border border-green-200/70 bg-green-50 px-3 py-2 dark:border-green-800/50 dark:bg-green-900/20">
               <Icon name="gift" size="sm" class="text-green-600 dark:text-green-400" />
               <span class="text-sm text-green-700 dark:text-green-400">
-                {{ t('auth.promoCodeValid', { amount: promoValidation.bonusAmount?.toFixed(2) }) }}
+                {{ t('auth.promoCodeValid', { amount: formatMoney(promoValidation.bonusAmount || 0) }) }}
               </span>
             </div>
           </transition>
@@ -351,6 +351,7 @@ import LoginAgreementPrompt from '@/components/auth/LoginAgreementPrompt.vue'
 import Icon from '@/components/icons/Icon.vue'
 import TurnstileWidget from '@/components/CaptchaChallenge.vue'
 import { useAuthStore, useAppStore } from '@/stores'
+import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import {
   buildOAuthLoginStartURL,
   getPublicSettings,
@@ -383,6 +384,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const appStore = useAppStore()
+const { formatMoney } = useMoneyDisplay()
 
 // ==================== State ====================
 
