@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PlazaModelPricingTable from '../PlazaModelPricingTable.vue'
 import type { PlazaModel } from '@/api/modelPlaza'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -51,6 +52,26 @@ function mountTable(
 }
 
 describe('PlazaModelPricingTable', () => {
+  beforeEach(() => setMoneyDisplaySymbol('$'))
+
+  it('站点符号不影响美元官方价', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mountTable([tokenModel({
+      pricing: {
+        ...tokenModel().pricing!,
+        input_price: 1e-6,
+      },
+      official_pricing: {
+        ...tokenModel().official_pricing!,
+        input_price: 3e-6,
+      },
+    })], 1)
+
+    expect(wrapper.text()).toContain('¥1.00')
+    expect(wrapper.text()).toContain('$3.00')
+    expect(wrapper.text()).not.toContain('¥3.00')
+  })
+
   it('倍率为 1 时展示渠道单价原值($/1M),价格保底 2 位小数', () => {
     const wrapper = mountTable([tokenModel()], 1)
     const text = wrapper.text()

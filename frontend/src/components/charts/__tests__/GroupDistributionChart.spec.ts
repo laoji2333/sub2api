@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import GroupDistributionChart from '../GroupDistributionChart.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 const messages: Record<string, string> = {
   'admin.dashboard.groupDistribution': 'Group Distribution',
@@ -35,6 +36,8 @@ vi.mock('vue-chartjs', () => ({
 }))
 
 describe('GroupDistributionChart', () => {
+  beforeEach(() => setMoneyDisplaySymbol('$'))
+
   const groupStats = [
     {
       group_id: 1,
@@ -129,5 +132,18 @@ describe('GroupDistributionChart', () => {
     expect(wrapper.text()).not.toContain('Account Cost')
     expect(wrapper.findAll('thead th')).toHaveLength(5)
     expect(wrapper.findAll('tbody tr')[0].findAll('td')).toHaveLength(5)
+  })
+
+  it('keeps actual cost in the configured symbol and standard cost in USD', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mount(GroupDistributionChart, {
+      props: { groupStats, showAccountCost: false },
+      global: { stubs: { LoadingSpinner: true } },
+    })
+
+    const firstRow = wrapper.findAll('tbody tr')[0].text()
+    expect(firstRow).toContain('¥0.100')
+    expect(firstRow).toContain('$1.80')
+    expect(firstRow).not.toContain('¥1.80')
   })
 })

@@ -17,6 +17,7 @@ import { mount } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
 import UsageTable from '../UsageTable.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 const messages: Record<string, string> = {
   'admin.usage.userDeletedBadge': 'Deleted',
@@ -123,6 +124,7 @@ const baseImageRow = {
 
 describe('admin UsageTable tooltip', () => {
   beforeEach(() => {
+    setMoneyDisplaySymbol('$')
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
       x: 0,
       y: 0,
@@ -169,6 +171,7 @@ describe('admin UsageTable tooltip', () => {
   })
 
   it('shows service tier and billing breakdown in cost tooltip', async () => {
+    setMoneyDisplaySymbol('¥')
     const row = {
       request_id: 'req-admin-1',
       actual_cost: 0.092883,
@@ -212,6 +215,7 @@ describe('admin UsageTable tooltip', () => {
     expect(text).toContain('Account rate')
     expect(text).toContain('User billed')
     expect(text).toContain('Account billed')
+    expect(text).toContain('¥0.092883')
     expect(text).toContain('$0.092883')
     expect(text).toContain('$5.0000 / 1M tokens')
     expect(text).toContain('$30.0000 / 1M tokens')

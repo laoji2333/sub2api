@@ -80,7 +80,7 @@
                   {{ moneyDisplaySymbol }}{{ formatCost(group.account_cost) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
-                  {{ moneyDisplaySymbol }}{{ formatCost(group.cost) }}
+                  ${{ formatCost(group.cost) }}
                 </td>
               </tr>
               <!-- User breakdown sub-rows -->

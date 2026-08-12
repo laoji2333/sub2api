@@ -587,7 +587,7 @@ export default {
         siteSubtitleHint: '显示在登录和注册页面',
         siteSubtitlePlaceholder: '订阅转 API 转换平台',
         moneyDisplaySymbol: '金钱显示符号',
-        moneyDisplaySymbolHint: '仅替换站内余额、额度、用量和价格的显示符号，不进行汇率换算',
+        moneyDisplaySymbolHint: '用于余额、额度、实际费用和实付价格等站内金额；官方价格、渠道美元定价及标准费用仍显示美元符号，不进行汇率换算',
         moneyDisplaySymbolPlaceholder: '如：¥ 或 ￥',
         apiBaseUrl: 'API 端点地址',
         apiBaseUrlHint: '用于"使用密钥"、"导入到 CC Switch"和回调地址建议，留空则使用当前站点地址',

@@ -110,7 +110,7 @@
                   {{ moneyDisplaySymbol }}{{ formatCost(item.actual_cost) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
-                  {{ moneyDisplaySymbol }}{{ formatCost(item.cost) }}
+                  ${{ formatCost(item.cost) }}
                 </td>
               </tr>
               <tr v-if="expandedKey === item.endpoint">

@@ -162,7 +162,6 @@ import { computed, nextTick, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import PricingRow from './PricingRow.vue'
 import { formatScaled } from '@/utils/pricing'
-import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
 import {
   BILLING_MODE_TOKEN,
   BILLING_MODE_PER_REQUEST,
@@ -200,7 +199,6 @@ const props = withDefaults(
 const effectivePlatform = computed<string>(() => props.model.platform || props.platformHint || '')
 
 const { t } = useI18n()
-const { moneyDisplaySymbol } = useMoneyDisplay()
 
 /** 按 token 定价展示时的换算单位：每百万 token。 */
 const perMillionScale = 1_000_000
@@ -243,10 +241,10 @@ function formatRange(min: number, max: number | null): string {
 
 function formatInterval(iv: UserPricingInterval, mode: BillingMode): string {
   if (mode === BILLING_MODE_PER_REQUEST || mode === BILLING_MODE_IMAGE) {
-    return formatScaled(iv.per_request_price, 1, 0, moneyDisplaySymbol.value)
+    return formatScaled(iv.per_request_price, 1, 0, '$')
   }
-  const input = formatScaled(iv.input_price, perMillionScale, 0, moneyDisplaySymbol.value)
-  const output = formatScaled(iv.output_price, perMillionScale, 0, moneyDisplaySymbol.value)
+  const input = formatScaled(iv.input_price, perMillionScale, 0, '$')
+  const output = formatScaled(iv.output_price, perMillionScale, 0, '$')
   return `${input} / ${output}`
 }
 

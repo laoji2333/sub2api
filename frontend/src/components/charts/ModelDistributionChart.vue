@@ -149,7 +149,7 @@
                   {{ moneyDisplaySymbol }}{{ formatCost(model.account_cost) }}
                 </td>
                 <td class="py-1.5 text-right text-gray-400 dark:text-gray-500">
-                  {{ moneyDisplaySymbol }}{{ formatCost(model.cost) }}
+                  ${{ formatCost(model.cost) }}
                 </td>
               </tr>
               <tr v-if="expandedKey === `model-${model.model}`">

@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { beforeEach } from 'vitest'
 
 import ModelDistributionChart from '../ModelDistributionChart.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 const messages: Record<string, string> = {
   'admin.dashboard.modelDistribution': 'Model Distribution',
@@ -48,6 +50,8 @@ vi.mock('vue-chartjs', () => ({
 }))
 
 describe('ModelDistributionChart', () => {
+  beforeEach(() => setMoneyDisplaySymbol('$'))
+
   const modelStats = [
     {
       model: 'model-a',
@@ -197,5 +201,18 @@ describe('ModelDistributionChart', () => {
     expect(rows[3].text()).toContain('4')
     expect(rows[3].text()).toContain('400')
     expect(rows[3].text()).toContain('$10.00')
+  })
+
+  it('keeps actual cost in the configured symbol and standard cost in USD', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mount(ModelDistributionChart, {
+      props: { modelStats, showAccountCost: false },
+      global: { stubs: { LoadingSpinner: true } },
+    })
+
+    const firstRow = wrapper.findAll('tbody tr')[0].text()
+    expect(firstRow).toContain('¥0.200')
+    expect(firstRow).toContain('$1.50')
+    expect(firstRow).not.toContain('¥1.50')
   })
 })

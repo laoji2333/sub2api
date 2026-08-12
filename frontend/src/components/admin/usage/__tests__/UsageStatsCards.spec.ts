@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
 import UsageStatsCards from '../UsageStatsCards.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 const messages: Record<string, string> = {
   'usage.totalRequests': 'Total Requests',
@@ -44,6 +45,8 @@ const stats = {
 }
 
 describe('UsageStatsCards', () => {
+  beforeEach(() => setMoneyDisplaySymbol('$'))
+
   it('shows cache token breakdown values', () => {
     const wrapper = mount(UsageStatsCards, {
       props: {
@@ -63,5 +66,17 @@ describe('UsageStatsCards', () => {
     expect(text).toContain('12')
     expect(text).toContain('Cache Read')
     expect(text).toContain('22')
+  })
+
+  it('keeps actual cost in the configured symbol and standard cost in USD', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mount(UsageStatsCards, {
+      props: { stats },
+      global: { stubs: { Icon: true } },
+    })
+
+    expect(wrapper.text()).toContain('¥0.0010')
+    expect(wrapper.text()).toContain('Standard $0.0010')
+    expect(wrapper.text()).not.toContain('Standard ¥0.0010')
   })
 })

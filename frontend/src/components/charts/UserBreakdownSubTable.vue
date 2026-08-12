@@ -29,7 +29,7 @@
             {{ moneyDisplaySymbol }}{{ formatCost(user.account_cost) }}
           </td>
           <td class="py-1 pr-1 text-right text-gray-400 dark:text-gray-500">
-            {{ moneyDisplaySymbol }}{{ formatCost(user.cost) }}
+            ${{ formatCost(user.cost) }}
           </td>
         </tr>
       </tbody>
