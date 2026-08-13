@@ -214,6 +214,14 @@ export default {
     ipRestrictionEnabled: '已配置 IP 限制',
     ccSwitchNotInstalled:
       'CC-Switch 未安装或协议处理程序未注册。请先安装 CC-Switch 或手动复制 API 密钥。',
+    ccsModelSelect: {
+      title: '选择默认模型',
+      description: '请选择“{group}”分组中要设为默认值的模型。',
+      loading: '正在加载可用模型...',
+      loadFailed: '加载当前分组的可用模型失败，请重试。',
+      retry: '重试',
+      empty: '当前分组暂无可用模型。'
+    },
     ccsClientSelect: {
       title: '选择客户端',
       description: '请选择您要导入到 CC-Switch 的客户端类型：',

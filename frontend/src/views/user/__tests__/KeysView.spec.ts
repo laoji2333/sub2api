@@ -105,7 +105,7 @@ vi.mock('vue-i18n', async () => {
   }
 })
 
-const createApiKey = (): ApiKey => ({
+const createApiKey = (overrides: Partial<ApiKey> = {}): ApiKey => ({
   id: 1,
   user_id: 1,
   key: 'sk-test-key',
@@ -134,6 +134,7 @@ const createApiKey = (): ApiKey => ({
   reset_5h_at: null,
   reset_1d_at: null,
   reset_7d_at: null,
+  ...overrides,
 })
 
 const AppLayoutStub = {
@@ -179,6 +180,7 @@ const DataTableStub = {
         >
           <slot name="cell-last_used_ip" :value="row.last_used_ip" :row="row" />
         </div>
+        <slot name="cell-actions" :value="row" :row="row" />
       </div>
       <slot name="empty" />
     </div>
@@ -215,6 +217,19 @@ const IconStub = {
   template: '<span data-test="icon">{{ name }}</span>',
 }
 
+const BaseDialogStub = {
+  name: 'BaseDialog',
+  props: ['show', 'title'],
+  emits: ['close'],
+  template: `
+    <div v-if="show" data-test="base-dialog">
+      <h2>{{ title }}</h2>
+      <slot />
+      <slot name="footer" />
+    </div>
+  `,
+}
+
 const mountView = async () => {
   const wrapper = mount(KeysView, {
     global: {
@@ -223,7 +238,7 @@ const mountView = async () => {
         TablePageLayout: TablePageLayoutStub,
         DataTable: DataTableStub,
         Pagination: PaginationStub,
-        BaseDialog: true,
+        BaseDialog: BaseDialogStub,
         ConfirmDialog: true,
         EmptyState: true,
         Select: SelectStub,
@@ -283,6 +298,11 @@ describe('user KeysView column settings', () => {
     getAvailableGroups.mockResolvedValue([])
     getUserGroupRates.mockResolvedValue({})
     isCurrentStep.mockReturnValue(false)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllGlobals()
   })
 
   it('uses the default API key columns with low-frequency columns hidden', async () => {
@@ -436,6 +456,91 @@ describe('user KeysView column settings', () => {
         sort_order: 'asc',
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
+  })
+
+  it('waits for the user to choose a group model before importing to CC Switch', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ data: [{ id: 'claude-sonnet-5' }, { id: 'claude-opus-5' }] })
+      })
+    )
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null)
+
+    const wrapper = await mountView()
+    const button = getButtonByText(wrapper, 'keys.importToCcSwitch')
+    await button.trigger('click')
+    await flushPromises()
+
+    expect(openSpy).not.toHaveBeenCalled()
+    expect(wrapper.get('[data-test="ccs-model-list"]').text()).toContain('claude-sonnet-5')
+    expect(wrapper.get('[data-test="ccs-model-list"]').text()).toContain('claude-opus-5')
+    expect(wrapper.get('[data-test="confirm-ccs-model"]').attributes('disabled')).toBeDefined()
+
+    await wrapper.get('input[value="claude-opus-5"]').setValue(true)
+    await wrapper.get('[data-test="confirm-ccs-model"]').trigger('click')
+
+    expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('model=claude-opus-5'), '_self')
+  })
+
+  it('keeps the model dialog open and allows retry when loading models fails', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ data: [{ id: 'claude-sonnet-5' }] }) })
+    vi.stubGlobal('fetch', fetchMock)
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null)
+
+    const wrapper = await mountView()
+    const button = getButtonByText(wrapper, 'keys.importToCcSwitch')
+    await button.trigger('click')
+    await flushPromises()
+
+    expect(openSpy).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('keys.ccsModelSelect.loadFailed')
+
+    await getButtonByText(wrapper, 'keys.ccsModelSelect.retry').trigger('click')
+    await flushPromises()
+
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+    expect(wrapper.get('[data-test="ccs-model-list"]').text()).toContain('claude-sonnet-5')
+  })
+
+  it('selects a model before selecting the Antigravity client', async () => {
+    listKeys.mockResolvedValue({
+      items: [
+        createApiKey({
+          group_id: 7,
+          group: { id: 7, name: 'Antigravity', platform: 'antigravity' } as ApiKey['group']
+        })
+      ],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      pages: 1
+    })
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [{ id: 'gemini-3.1-pro' }] }) })
+    )
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue(null)
+
+    const wrapper = await mountView()
+    await getButtonByText(wrapper, 'keys.importToCcSwitch').trigger('click')
+    await flushPromises()
+    await wrapper.get('input[value="gemini-3.1-pro"]').setValue(true)
+    await wrapper.get('[data-test="confirm-ccs-model"]').trigger('click')
+
+    expect(openSpy).not.toHaveBeenCalled()
+    expect(wrapper.text()).toContain('keys.ccsClientSelect.geminiCli')
+
+    await getButtonByText(wrapper, 'keys.ccsClientSelect.geminiCli').trigger('click')
+
+    expect(openSpy).toHaveBeenCalledWith(
+      expect.stringContaining('model=gemini-3.1-pro'),
+      '_self'
     )
   })
 })

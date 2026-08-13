@@ -1,8 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   GROK_CC_SWITCH_MODEL,
   OPENAI_CC_SWITCH_CODEX_MODEL,
-  buildCcSwitchImportDeeplink
+  buildCcSwitchImportDeeplink,
+  fetchCcSwitchModels
 } from '@/utils/ccswitchImport'
 import type { GroupPlatform } from '@/types'
 
@@ -92,5 +93,87 @@ describe('ccswitchImport utils', () => {
     expect(params.get('app')).toBe('gemini')
     expect(params.get('endpoint')).toBe(`${baseInput.baseUrl}/antigravity`)
     expect(params.has('model')).toBe(false)
+  })
+
+  it('prefers an explicit model parameter over the platform default', () => {
+    const params = paramsFromDeeplink(
+      buildCcSwitchImportDeeplink({
+        ...baseInput,
+        platform: 'openai',
+        clientType: 'claude',
+        model: 'gpt-5.5'
+      })
+    )
+
+    expect(params.get('model')).toBe('gpt-5.5')
+  })
+
+  it('returns the models from the group models list', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [{ id: 'claude-sonnet-5' }, { id: 'claude-opus-5' }] })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await expect(fetchCcSwitchModels('https://api.example.com', 'sk-test')).resolves.toEqual([
+      'claude-sonnet-5',
+      'claude-opus-5'
+    ])
+    expect(fetchMock).toHaveBeenCalledWith('https://api.example.com/v1/models', {
+      headers: { Authorization: 'Bearer sk-test' },
+      signal: expect.any(AbortSignal)
+    })
+  })
+
+  it('does not duplicate the /v1 suffix when fetching models', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await fetchCcSwitchModels('https://api.example.com/v1/', 'sk-test')
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://api.example.com/v1/models',
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    )
+  })
+
+  it('returns null when the models request times out', async () => {
+    vi.useFakeTimers()
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, init?: RequestInit) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')))
+        })
+      )
+    )
+
+    const result = fetchCcSwitchModels('https://api.example.com', 'sk-test')
+    await vi.runAllTimersAsync()
+
+    await expect(result).resolves.toBeNull()
+  })
+
+  it('returns null when the models request fails', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+
+    await expect(fetchCcSwitchModels('https://api.example.com', 'sk-test')).resolves.toBeNull()
+  })
+
+  it('returns null when the models response has no entries', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ data: [] }) }))
+
+    await expect(fetchCcSwitchModels('https://api.example.com/', 'sk-test')).resolves.toEqual([])
+  })
+
+  it('returns null when the models request throws', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')))
+
+    await expect(fetchCcSwitchModels('https://api.example.com', 'sk-test')).resolves.toBeNull()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
   })
 })

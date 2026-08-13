@@ -2,6 +2,7 @@ import type { GroupPlatform } from '@/types'
 
 export const OPENAI_CC_SWITCH_CODEX_MODEL = 'gpt-5.6-sol'
 export const GROK_CC_SWITCH_MODEL = 'grok-4.5'
+const CC_SWITCH_MODELS_REQUEST_TIMEOUT_MS = 1500
 
 export type CcSwitchClientType = 'claude' | 'gemini'
 
@@ -18,6 +19,12 @@ export interface CcSwitchImportDeeplinkInput {
   providerName: string
   apiKey: string
   usageScript: string
+  /** Default model for the imported provider; falls back to platform defaults. */
+  model?: string
+}
+
+export interface CcSwitchModelsListResponse {
+  data?: Array<{ id?: string }>
 }
 
 function withV1Endpoint(baseUrl: string): string {
@@ -63,6 +70,7 @@ export function resolveCcSwitchImportConfig(
 
 export function buildCcSwitchImportDeeplink(input: CcSwitchImportDeeplinkInput): string {
   const config = resolveCcSwitchImportConfig(input.platform, input.clientType, input.baseUrl)
+  const model = input.model ?? config.model
   const entries: [string, string][] = [
     ['resource', 'provider'],
     ['app', config.app],
@@ -76,9 +84,33 @@ export function buildCcSwitchImportDeeplink(input: CcSwitchImportDeeplinkInput):
     ['usageAutoInterval', '30']
   ]
 
-  if (config.model) {
-    entries.splice(2, 0, ['model', config.model])
+  if (model) {
+    entries.splice(2, 0, ['model', model])
   }
 
   return `ccswitch://v1/import?${new URLSearchParams(entries).toString()}`
+}
+
+/**
+ * Fetches the group's available models from the gateway /v1/models endpoint
+ * for explicit selection before importing to CC Switch.
+ * Returns null when the request fails.
+ */
+export async function fetchCcSwitchModels(baseUrl: string, apiKey: string): Promise<string[] | null> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), CC_SWITCH_MODELS_REQUEST_TIMEOUT_MS)
+
+  try {
+    const response = await fetch(`${withV1Endpoint(baseUrl)}/models`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      signal: controller.signal
+    })
+    if (!response.ok) return null
+    const payload = (await response.json()) as CcSwitchModelsListResponse
+    return payload.data?.flatMap((item) => (item?.id ? [item.id] : [])) ?? []
+  } catch {
+    return null
+  } finally {
+    clearTimeout(timeoutId)
+  }
 }
