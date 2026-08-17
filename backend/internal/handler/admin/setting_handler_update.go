@@ -157,6 +157,8 @@ type UpdateSettingsRequest struct {
 	SiteLogo                    string                `json:"site_logo"`
 	SiteSubtitle                string                `json:"site_subtitle"`
 	MoneyDisplaySymbol          string                `json:"money_display_symbol"`
+	QQGroupNumber               string                `json:"qq_group_number"`
+	QQGroupJoinURL              string                `json:"qq_group_join_url"`
 	APIBaseURL                  string                `json:"api_base_url"`
 	ContactInfo                 string                `json:"contact_info"`
 	DocURL                      string                `json:"doc_url"`
@@ -1613,6 +1615,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteLogo:                               req.SiteLogo,
 		SiteSubtitle:                           req.SiteSubtitle,
 		MoneyDisplaySymbol:                     req.MoneyDisplaySymbol,
+		QQGroupNumber:                          req.QQGroupNumber,
+		QQGroupJoinURL:                         req.QQGroupJoinURL,
 		APIBaseURL:                             req.APIBaseURL,
 		ContactInfo:                            req.ContactInfo,
 		DocURL:                                 req.DocURL,
@@ -2224,6 +2228,8 @@ func (h *SettingHandler) UpdateSettings(c *gin.Context) {
 		SiteLogo:                                               updatedSettings.SiteLogo,
 		SiteSubtitle:                                           updatedSettings.SiteSubtitle,
 		MoneyDisplaySymbol:                                     updatedSettings.MoneyDisplaySymbol,
+		QQGroupNumber:                                          updatedSettings.QQGroupNumber,
+		QQGroupJoinURL:                                         updatedSettings.QQGroupJoinURL,
 		APIBaseURL:                                             updatedSettings.APIBaseURL,
 		ContactInfo:                                            updatedSettings.ContactInfo,
 		DocURL:                                                 updatedSettings.DocURL,

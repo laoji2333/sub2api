@@ -72,6 +72,8 @@ func (h *SettingHandler) GetPublicSettings(c *gin.Context) {
 		SiteLogo:                            settings.SiteLogo,
 		SiteSubtitle:                        settings.SiteSubtitle,
 		MoneyDisplaySymbol:                  settings.MoneyDisplaySymbol,
+		QQGroupNumber:                       settings.QQGroupNumber,
+		QQGroupJoinURL:                      settings.QQGroupJoinURL,
 		APIBaseURL:                          settings.APIBaseURL,
 		ContactInfo:                         settings.ContactInfo,
 		DocURL:                              settings.DocURL,

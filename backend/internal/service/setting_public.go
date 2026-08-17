@@ -184,6 +184,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeySiteLogo,
 		SettingKeySiteSubtitle,
 		SettingKeyMoneyDisplaySymbol,
+		SettingKeyQQGroupNumber,
+		SettingKeyQQGroupJoinURL,
 		SettingKeyAPIBaseURL,
 		SettingKeyContactInfo,
 		SettingKeyDocURL,
@@ -324,6 +326,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SiteLogo:                            settings[SettingKeySiteLogo],
 		SiteSubtitle:                        s.getStringOrDefault(settings, SettingKeySiteSubtitle, "Subscription to API Conversion Platform"),
 		MoneyDisplaySymbol:                  s.getStringOrDefault(settings, SettingKeyMoneyDisplaySymbol, "$"),
+		QQGroupNumber:                       strings.TrimSpace(settings[SettingKeyQQGroupNumber]),
+		QQGroupJoinURL:                      strings.TrimSpace(settings[SettingKeyQQGroupJoinURL]),
 		APIBaseURL:                          settings[SettingKeyAPIBaseURL],
 		ContactInfo:                         settings[SettingKeyContactInfo],
 		DocURL:                              settings[SettingKeyDocURL],
@@ -567,6 +571,8 @@ type PublicSettingsInjectionPayload struct {
 	SiteLogo                            string                   `json:"site_logo"`
 	SiteSubtitle                        string                   `json:"site_subtitle"`
 	MoneyDisplaySymbol                  string                   `json:"money_display_symbol"`
+	QQGroupNumber                       string                   `json:"qq_group_number"`
+	QQGroupJoinURL                      string                   `json:"qq_group_join_url"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`
@@ -653,6 +659,8 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		SiteLogo:                            settings.SiteLogo,
 		SiteSubtitle:                        settings.SiteSubtitle,
 		MoneyDisplaySymbol:                  settings.MoneyDisplaySymbol,
+		QQGroupNumber:                       settings.QQGroupNumber,
+		QQGroupJoinURL:                      settings.QQGroupJoinURL,
 		APIBaseURL:                          settings.APIBaseURL,
 		ContactInfo:                         settings.ContactInfo,
 		DocURL:                              settings.DocURL,

@@ -6254,6 +6254,40 @@
                     {{ t("admin.settings.site.moneyDisplaySymbolHint") }}
                   </p>
                 </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.site.qqGroupNumber") }}
+                  </label>
+                  <input
+                    v-model="form.qq_group_number"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="20"
+                    class="input"
+                    :placeholder="t('admin.settings.site.qqGroupNumberPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.qqGroupNumberHint") }}
+                  </p>
+                </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.site.qqGroupJoinUrl") }}
+                  </label>
+                  <input
+                    v-model="form.qq_group_join_url"
+                    type="url"
+                    class="input"
+                    :placeholder="t('admin.settings.site.qqGroupJoinUrlPlaceholder')"
+                  />
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.qqGroupJoinUrlHint") }}
+                  </p>
+                </div>
               </div>
 
               <!-- API Base URL -->
@@ -9471,6 +9505,8 @@ const form = reactive<SettingsForm>({
   site_logo: "",
   site_subtitle: "Subscription to API Conversion Platform",
   money_display_symbol: "$",
+  qq_group_number: "",
+  qq_group_join_url: "",
   api_base_url: "",
   contact_info: "",
   doc_url: "",
@@ -11097,6 +11133,8 @@ async function saveSettings() {
       site_logo: form.site_logo,
       site_subtitle: form.site_subtitle,
       money_display_symbol: form.money_display_symbol.trim() || "$",
+      qq_group_number: form.qq_group_number.trim(),
+      qq_group_join_url: form.qq_group_join_url.trim(),
       api_base_url: form.api_base_url,
       contact_info: form.contact_info,
       doc_url: form.doc_url,

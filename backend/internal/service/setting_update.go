@@ -351,6 +351,10 @@ func (s *SettingService) buildSystemSettingsUpdates(ctx context.Context, setting
 	}
 	settings.MoneyDisplaySymbol = moneyDisplaySymbol
 	updates[SettingKeyMoneyDisplaySymbol] = moneyDisplaySymbol
+	settings.QQGroupNumber = strings.TrimSpace(settings.QQGroupNumber)
+	settings.QQGroupJoinURL = strings.TrimSpace(settings.QQGroupJoinURL)
+	updates[SettingKeyQQGroupNumber] = settings.QQGroupNumber
+	updates[SettingKeyQQGroupJoinURL] = settings.QQGroupJoinURL
 	updates[SettingKeyAPIBaseURL] = settings.APIBaseURL
 	updates[SettingKeyContactInfo] = settings.ContactInfo
 	updates[SettingKeyDocURL] = settings.DocURL

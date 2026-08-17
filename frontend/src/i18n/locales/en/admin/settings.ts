@@ -596,6 +596,12 @@ export default {
         moneyDisplaySymbol: 'Money Display Symbol',
         moneyDisplaySymbolHint: 'Used for site balance, quota, actual cost, and paid prices; official prices, channel USD pricing, and standard costs remain in USD. No currency conversion is performed',
         moneyDisplaySymbolPlaceholder: 'e.g. ¥ or ￥',
+        qqGroupNumber: 'QQ Group Number',
+        qqGroupNumberHint: 'The user-facing entry appears after both this and the join URL are configured',
+        qqGroupNumberPlaceholder: 'Enter QQ group number',
+        qqGroupJoinUrl: 'QQ Group Join URL',
+        qqGroupJoinUrlHint: 'Only http and https URLs are supported',
+        qqGroupJoinUrlPlaceholder: 'https://qm.qq.com/...',
         apiBaseUrl: 'API Base URL',
         apiBaseUrlPlaceholder: 'https://api.example.com',
         apiBaseUrlHint:

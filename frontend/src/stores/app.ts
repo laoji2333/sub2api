@@ -347,6 +347,8 @@ export const useAppStore = defineStore('app', () => {
         site_logo: siteLogo.value,
         site_subtitle: '',
         money_display_symbol: moneyDisplaySymbol.value,
+        qq_group_number: '',
+        qq_group_join_url: '',
         api_base_url: apiBaseUrl.value,
         contact_info: contactInfo.value,
         doc_url: docUrl.value,

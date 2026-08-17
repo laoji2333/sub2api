@@ -298,6 +298,8 @@ const (
 	SettingKeySiteLogo                    = "site_logo"                     // 网站Logo (base64)
 	SettingKeySiteSubtitle                = "site_subtitle"                 // 网站副标题
 	SettingKeyMoneyDisplaySymbol          = "money_display_symbol"          // 站内金额展示符号（仅展示，不换算）
+	SettingKeyQQGroupNumber               = "qq_group_number"               // QQ群号
+	SettingKeyQQGroupJoinURL              = "qq_group_join_url"             // QQ群入群链接
 	SettingKeyAPIBaseURL                  = "api_base_url"                  // API端点地址（用于客户端配置和导入）
 	SettingKeyContactInfo                 = "contact_info"                  // 客服联系方式
 	SettingKeyDocURL                      = "doc_url"                       // 文档链接

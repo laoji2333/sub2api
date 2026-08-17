@@ -390,6 +390,19 @@ describe('useAppStore', () => {
       expect(useMoneyDisplay().formatMoney(12.3)).toBe('¥12.30')
     })
 
+    it('同步公开配置中的 QQ 群信息', async () => {
+      vi.mocked(getPublicSettings).mockResolvedValueOnce(createPublicSettings({
+        qq_group_number: '123456789',
+        qq_group_join_url: 'https://qm.qq.com/example'
+      }))
+      const store = useAppStore()
+
+      await store.fetchPublicSettings()
+
+      expect(store.cachedPublicSettings?.qq_group_number).toBe('123456789')
+      expect(store.cachedPublicSettings?.qq_group_join_url).toBe('https://qm.qq.com/example')
+    })
+
     it('并发请求失败时所有调用得到 null，且不会标记设置已加载', async () => {
       const deferred = createDeferred<PublicSettings>()
       vi.mocked(getPublicSettings).mockReturnValue(deferred.promise)

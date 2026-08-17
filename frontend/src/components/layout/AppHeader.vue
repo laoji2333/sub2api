@@ -23,6 +23,74 @@
 
       <!-- Right: Announcements + Docs + Language + Subscriptions + Balance + User Dropdown -->
       <div class="flex min-w-0 items-center gap-1 sm:gap-3">
+        <!-- QQ Group -->
+        <div v-if="user && hasQQGroup" class="relative" ref="qqGroupRef">
+          <button
+            type="button"
+            @click="toggleQQGroup"
+            :aria-label="t('common.qqGroup.join')"
+            :aria-expanded="qqGroupOpen"
+            aria-haspopup="dialog"
+            :title="t('common.qqGroup.join')"
+            class="flex h-9 items-center gap-1.5 rounded-lg border border-primary-200 bg-primary-50 px-2 text-sm font-medium text-primary-700 transition-colors hover:border-primary-300 hover:bg-primary-100 dark:border-primary-800 dark:bg-primary-900/20 dark:text-primary-300 dark:hover:border-primary-700 dark:hover:bg-primary-900/40 sm:px-2.5"
+          >
+            <Icon name="chat" size="sm" />
+            <span class="hidden sm:inline">{{ t('common.qqGroup.join') }}</span>
+          </button>
+
+          <transition name="dropdown">
+            <div
+              v-if="qqGroupOpen"
+              class="dropdown right-0 mt-2 w-72 p-0"
+              role="dialog"
+              :aria-label="t('common.qqGroup.join')"
+            >
+              <div class="flex items-center gap-2 border-b border-gray-100 px-4 py-3 dark:border-dark-700">
+                <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+                  <Icon name="users" size="sm" />
+                </div>
+                <div>
+                  <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                    {{ t('common.qqGroup.official') }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="p-4">
+                <div class="rounded-lg border border-primary-100 bg-primary-50/50 p-3 dark:border-primary-900/50 dark:bg-primary-900/10">
+                  <div class="flex items-center justify-between gap-3">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
+                      {{ t('common.qqGroup.groupNumber') }}
+                    </span>
+                    <button
+                      type="button"
+                      @click="copyQQGroupNumber"
+                      class="flex shrink-0 items-center gap-1 rounded px-1.5 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-100 dark:text-primary-300 dark:hover:bg-primary-900/40"
+                    >
+                      <Icon :name="qqGroupNumberCopied ? 'check' : 'copy'" size="xs" />
+                      {{ qqGroupNumberCopied ? t('common.copied') : t('common.copy') }}
+                    </button>
+                  </div>
+                  <div class="mt-1 break-all text-base font-semibold text-gray-900 dark:text-white">
+                    {{ qqGroupNumber }}
+                  </div>
+                </div>
+
+                <a
+                  :href="qqGroupJoinUrl"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="closeQQGroup"
+                  class="mt-3 flex h-10 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-dark-800"
+                >
+                  <Icon name="externalLink" size="sm" />
+                  {{ t('common.qqGroup.open') }}
+                </a>
+              </div>
+            </div>
+          </transition>
+        </div>
+
         <!-- Announcement Bell -->
         <AnnouncementBell v-if="user" />
 
@@ -255,6 +323,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAppStore, useAuthStore, useOnboardingStore } from '@/stores'
 import { useMoneyDisplay } from '@/composables/useMoneyDisplay'
+import { useClipboard } from '@/composables/useClipboard'
 import { useAdminSettingsStore } from '@/stores/adminSettings'
 import LocaleSwitcher from '@/components/common/LocaleSwitcher.vue'
 import SubscriptionProgressMini from '@/components/common/SubscriptionProgressMini.vue'
@@ -275,8 +344,13 @@ const onboardingStore = useOnboardingStore()
 const user = computed(() => authStore.user)
 const dropdownOpen = ref(false)
 const dropdownRef = ref<HTMLElement | null>(null)
+const qqGroupOpen = ref(false)
+const qqGroupRef = ref<HTMLElement | null>(null)
 const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
+const qqGroupNumber = computed(() => appStore.cachedPublicSettings?.qq_group_number?.trim() || '')
+const qqGroupJoinUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.qq_group_join_url || ''))
+const hasQQGroup = computed(() => Boolean(qqGroupNumber.value && qqGroupJoinUrl.value))
 const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')
 const availableBalance = computed(() => Number(user.value?.balance || 0))
@@ -286,6 +360,7 @@ const balanceAvailableText = computed(() => t('common.availableBalance') === 'co
 const balanceFrozenText = computed(() => t('common.frozenBalance') === 'common.frozenBalance' ? '冻结金额' : t('common.frozenBalance'))
 const balanceTotalText = computed(() => t('common.totalBalance') === 'common.totalBalance' ? '总余额' : t('common.totalBalance'))
 const balanceFrozenLabel = computed(() => `${balanceFrozenText.value} ${formatHeaderMoney(frozenBalance.value)}`)
+const { copied: qqGroupNumberCopied, copyToClipboard } = useClipboard()
 
 // 只在标准模式的管理员下显示新手引导按钮
 const showOnboardingButton = computed(() => {
@@ -347,6 +422,18 @@ function closeDropdown() {
   dropdownOpen.value = false
 }
 
+function toggleQQGroup() {
+  qqGroupOpen.value = !qqGroupOpen.value
+}
+
+function closeQQGroup() {
+  qqGroupOpen.value = false
+}
+
+function copyQQGroupNumber() {
+  void copyToClipboard(qqGroupNumber.value)
+}
+
 async function handleLogout() {
   closeDropdown()
   try {
@@ -370,6 +457,9 @@ function formatHeaderMoney(value: number) {
 function handleClickOutside(event: MouseEvent) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
     closeDropdown()
+  }
+  if (qqGroupRef.value && !qqGroupRef.value.contains(event.target as Node)) {
+    closeQQGroup()
   }
 }
 

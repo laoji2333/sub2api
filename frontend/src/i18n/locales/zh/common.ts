@@ -58,6 +58,12 @@ export default {
     copiedToClipboard: '已复制到剪贴板',
     copied: '已复制',
     copyFailed: '复制失败',
+    qqGroup: {
+      join: '加入QQ群',
+      official: '官方群交流',
+      groupNumber: 'QQ群号',
+      open: '点击加入QQ群'
+    },
     verifying: '验证中...',
     processing: '处理中...',
     contactSupport: '联系客服',

@@ -114,6 +114,22 @@ func TestSettingService_GetPublicSettings_ExposesMoneyDisplaySymbol(t *testing.T
 	require.Equal(t, "$", missing.MoneyDisplaySymbol)
 }
 
+func TestSettingService_GetPublicSettings_ExposesQQGroup(t *testing.T) {
+	configured, err := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeyQQGroupNumber:  " 123456789 ",
+		SettingKeyQQGroupJoinURL: " https://qm.qq.com/example ",
+	}}, &config.Config{}).GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, "123456789", configured.QQGroupNumber)
+	require.Equal(t, "https://qm.qq.com/example", configured.QQGroupJoinURL)
+
+	missing, err := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).
+		GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, missing.QQGroupNumber)
+	require.Empty(t, missing.QQGroupJoinURL)
+}
+
 func TestSettingService_ChannelMonitorHideThroughputDefaultsToPrivate(t *testing.T) {
 	missing := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).GetChannelMonitorRuntime(context.Background())
 	require.True(t, missing.HideThroughput)

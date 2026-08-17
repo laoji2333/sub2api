@@ -240,6 +240,23 @@ func TestSettingService_UpdateSettings_PersistsMoneyDisplaySymbol(t *testing.T) 
 	}
 }
 
+func TestSettingService_UpdateSettings_PersistsQQGroup(t *testing.T) {
+	repo := &settingUpdateRepoStub{}
+	svc := NewSettingService(repo, &config.Config{})
+	settings := &SystemSettings{
+		QQGroupNumber:  " 123456789 ",
+		QQGroupJoinURL: " https://qm.qq.com/example ",
+	}
+
+	err := svc.UpdateSettings(context.Background(), settings)
+
+	require.NoError(t, err)
+	require.Equal(t, "123456789", repo.updates[SettingKeyQQGroupNumber])
+	require.Equal(t, "https://qm.qq.com/example", repo.updates[SettingKeyQQGroupJoinURL])
+	require.Equal(t, "123456789", settings.QQGroupNumber)
+	require.Equal(t, "https://qm.qq.com/example", settings.QQGroupJoinURL)
+}
+
 func TestSettingService_UpdateSettings_RejectsOverlongMoneyDisplaySymbol(t *testing.T) {
 	repo := &settingUpdateRepoStub{}
 	svc := NewSettingService(repo, &config.Config{})

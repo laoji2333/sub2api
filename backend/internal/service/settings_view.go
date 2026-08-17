@@ -153,6 +153,8 @@ type SystemSettings struct {
 	SiteLogo                    string
 	SiteSubtitle                string
 	MoneyDisplaySymbol          string
+	QQGroupNumber               string
+	QQGroupJoinURL              string
 	APIBaseURL                  string
 	ContactInfo                 string
 	DocURL                      string
@@ -342,6 +344,8 @@ type PublicSettings struct {
 	SiteLogo                            string
 	SiteSubtitle                        string
 	MoneyDisplaySymbol                  string
+	QQGroupNumber                       string
+	QQGroupJoinURL                      string
 	APIBaseURL                          string
 	ContactInfo                         string
 	DocURL                              string

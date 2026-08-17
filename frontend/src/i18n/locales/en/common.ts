@@ -58,6 +58,12 @@ export default {
     copiedToClipboard: 'Copied to clipboard',
     copied: 'Copied',
     copyFailed: 'Failed to copy',
+    qqGroup: {
+      join: 'Join QQ Group',
+      official: 'Official Group',
+      groupNumber: 'QQ Group Number',
+      open: 'Join QQ Group'
+    },
     verifying: 'Verifying...',
     processing: 'Processing...',
     contactSupport: 'Contact Support',

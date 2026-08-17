@@ -152,6 +152,8 @@ type SystemSettings struct {
 	SiteLogo                    string           `json:"site_logo"`
 	SiteSubtitle                string           `json:"site_subtitle"`
 	MoneyDisplaySymbol          string           `json:"money_display_symbol"`
+	QQGroupNumber               string           `json:"qq_group_number"`
+	QQGroupJoinURL              string           `json:"qq_group_join_url"`
 	APIBaseURL                  string           `json:"api_base_url"`
 	ContactInfo                 string           `json:"contact_info"`
 	DocURL                      string           `json:"doc_url"`
@@ -377,6 +379,8 @@ type PublicSettings struct {
 	SiteLogo                            string                   `json:"site_logo"`
 	SiteSubtitle                        string                   `json:"site_subtitle"`
 	MoneyDisplaySymbol                  string                   `json:"money_display_symbol"`
+	QQGroupNumber                       string                   `json:"qq_group_number"`
+	QQGroupJoinURL                      string                   `json:"qq_group_join_url"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`
