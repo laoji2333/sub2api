@@ -1523,7 +1523,7 @@ const groupOptions = computed(() =>
   }))
 )
 
-const selectedKeyGroupPlatform = ref<GroupPlatform>('openai')
+const selectedKeyGroupPlatform = ref<GroupPlatform | null>(null)
 const keyGroupPlatformTabs = computed(() => getKeyGroupPlatformTabs(groups.value))
 const keyFormGroupOptions = computed(() =>
   filterKeyGroupsByPlatform(groupOptions.value, selectedKeyGroupPlatform.value)
