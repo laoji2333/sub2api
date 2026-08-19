@@ -70,6 +70,15 @@ func (h *UsageHandler) List(c *gin.Context) {
 		}
 		exactTotal = parsed
 	}
+	excludeAdminUsers := false
+	if raw := strings.TrimSpace(c.Query("exclude_admin_users")); raw != "" {
+		parsed, err := strconv.ParseBool(raw)
+		if err != nil {
+			response.BadRequest(c, "Invalid exclude_admin_users value, use true or false")
+			return
+		}
+		excludeAdminUsers = parsed
+	}
 
 	// Parse filters
 	var userID, apiKeyID, accountID, groupID int64
@@ -195,6 +204,7 @@ func (h *UsageHandler) List(c *gin.Context) {
 		BillingType:           billingType,
 		BillingMode:           billingMode,
 		UpstreamModelMismatch: upstreamModelMismatch,
+		ExcludeAdminUsers:     excludeAdminUsers,
 		StartTime:             startTime,
 		EndTime:               endTime,
 		ExactTotal:            exactTotal,

@@ -549,6 +549,7 @@ export default {
 	  allUpstreamModelAudit: 'All response model states',
 	  upstreamModelMismatchOnly: 'Mismatched only',
 	  upstreamModelMatchedOnly: 'Matched only',
+	  excludeAdminUsers: 'Exclude admin accounts',
       ipAddress: 'IP',
       clickToViewBalance: 'Click to view balance history',
       failedToLoadUser: 'Failed to load user info',

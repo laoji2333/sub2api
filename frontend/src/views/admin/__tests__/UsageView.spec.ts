@@ -271,6 +271,46 @@ describe('admin UsageView route filters', () => {
   })
 })
 
+describe('admin UsageView admin-account filter', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    list.mockReset().mockResolvedValue({ items: [], total: 0, pages: 0 })
+    getStats.mockReset().mockResolvedValue({
+      total_requests: 0, total_input_tokens: 0, total_output_tokens: 0,
+      total_cache_tokens: 0, total_tokens: 0, total_cost: 0, total_actual_cost: 0, average_duration_ms: 0,
+    })
+    getSnapshotV2.mockReset().mockResolvedValue({ trend: [], models: [], groups: [] })
+    getModelStats.mockReset().mockResolvedValue({ models: [] })
+    getById.mockReset()
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('is unchecked by default and reloads only the detail list when enabled', async () => {
+    const wrapper = mountRouteFilteredUsageView()
+    await flushPromises()
+
+    const checkbox = wrapper.get('[data-testid="exclude-admin-users"]')
+    expect((checkbox.element as HTMLInputElement).checked).toBe(false)
+    expect(list).toHaveBeenLastCalledWith(
+      expect.objectContaining({ exclude_admin_users: undefined }),
+      expect.anything(),
+    )
+
+    const statsCalls = getStats.mock.calls.length
+    await checkbox.setValue(true)
+    await flushPromises()
+
+    expect(list).toHaveBeenLastCalledWith(
+      expect.objectContaining({ exclude_admin_users: true }),
+      expect.anything(),
+    )
+    expect(getStats).toHaveBeenCalledTimes(statsCalls)
+  })
+})
+
 describe('admin UsageView distribution metric toggles', () => {
   beforeEach(() => {
     vi.useFakeTimers()
