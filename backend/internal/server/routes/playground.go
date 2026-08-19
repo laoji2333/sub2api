@@ -1,0 +1,180 @@
+package routes
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
+	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
+	"github.com/Wei-Shaw/sub2api/internal/service"
+	"github.com/gin-gonic/gin"
+)
+
+const playgroundAPIKeyIDHeader = "X-Playground-API-Key-ID"
+
+type playgroundAPIKeyStore interface {
+	GetByID(ctx context.Context, id int64) (*service.APIKey, error)
+	List(ctx context.Context, userID int64, params pagination.PaginationParams, filters service.APIKeyListFilters) ([]service.APIKey, *pagination.PaginationResult, error)
+}
+
+type playgroundAPIKeyOption struct {
+	ID            int64  `json:"id"`
+	Name          string `json:"name"`
+	GroupID       int64  `json:"group_id"`
+	GroupName     string `json:"group_name"`
+	GroupPlatform string `json:"group_platform"`
+}
+
+func listPlaygroundAPIKeys(store playgroundAPIKeyStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subject, ok := middleware.GetAuthSubjectFromContext(c)
+		if !ok {
+			response.Unauthorized(c, "User not authenticated")
+			return
+		}
+		if store == nil {
+			response.InternalError(c, "Playground is unavailable")
+			return
+		}
+
+		keys, _, err := store.List(c.Request.Context(), subject.UserID, pagination.PaginationParams{
+			Page:      1,
+			PageSize:  1000,
+			SortBy:    "created_at",
+			SortOrder: "desc",
+		}, service.APIKeyListFilters{Status: service.StatusAPIKeyActive})
+		if err != nil {
+			response.ErrorFrom(c, err)
+			return
+		}
+
+		options := make([]playgroundAPIKeyOption, 0, len(keys))
+		for i := range keys {
+			key := &keys[i]
+			if !key.IsActive() || key.GroupID == nil || key.Group == nil || !key.Group.IsActive() {
+				continue
+			}
+			options = append(options, playgroundAPIKeyOption{
+				ID:            key.ID,
+				Name:          key.Name,
+				GroupID:       key.Group.ID,
+				GroupName:     key.Group.Name,
+				GroupPlatform: key.Group.Platform,
+			})
+		}
+
+		response.Success(c, options)
+	}
+}
+
+// useOwnedPlaygroundAPIKey exchanges the opaque key ID supplied by the UI for
+// the user's real API key on the server. The secret never appears in the
+// playground response or browser storage.
+func useOwnedPlaygroundAPIKey(store playgroundAPIKeyStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subject, ok := middleware.GetAuthSubjectFromContext(c)
+		if !ok {
+			response.Unauthorized(c, "User not authenticated")
+			c.Abort()
+			return
+		}
+
+		rawID := strings.TrimSpace(c.GetHeader(playgroundAPIKeyIDHeader))
+		c.Request.Header.Del(playgroundAPIKeyIDHeader)
+		keyID, err := strconv.ParseInt(rawID, 10, 64)
+		if err != nil || keyID <= 0 {
+			response.BadRequest(c, fmt.Sprintf("%s header must contain a valid API key ID", playgroundAPIKeyIDHeader))
+			c.Abort()
+			return
+		}
+		if store == nil {
+			response.InternalError(c, "Playground is unavailable")
+			c.Abort()
+			return
+		}
+
+		apiKey, err := store.GetByID(c.Request.Context(), keyID)
+		if err != nil {
+			if errors.Is(err, service.ErrAPIKeyNotFound) {
+				response.NotFound(c, "API key not found")
+			} else {
+				response.InternalError(c, "Failed to load API key")
+			}
+			c.Abort()
+			return
+		}
+		if apiKey == nil || apiKey.UserID != subject.UserID {
+			response.NotFound(c, "API key not found")
+			c.Abort()
+			return
+		}
+		if strings.TrimSpace(apiKey.Key) == "" {
+			response.InternalError(c, "API key is unavailable")
+			c.Abort()
+			return
+		}
+
+		originalAuthorization := c.GetHeader("Authorization")
+		c.Request.Header.Set("Authorization", "Bearer "+apiKey.Key)
+		defer func() {
+			if originalAuthorization == "" {
+				c.Request.Header.Del("Authorization")
+				return
+			}
+			c.Request.Header.Set("Authorization", originalAuthorization)
+		}()
+		c.Next()
+	}
+}
+
+func registerPlaygroundGatewayRoutes(
+	r *gin.Engine,
+	handlerModels gin.HandlerFunc,
+	handlerResponses gin.HandlerFunc,
+	jwtAuth middleware.JWTAuthMiddleware,
+	apiKeyAuth middleware.APIKeyAuthMiddleware,
+	apiKeyService *service.APIKeyService,
+	bodyLimit gin.HandlerFunc,
+	clientRequestID gin.HandlerFunc,
+	opsErrorLogger gin.HandlerFunc,
+	endpointNorm gin.HandlerFunc,
+	compositeTarget gin.HandlerFunc,
+	requireGroup gin.HandlerFunc,
+) {
+	if jwtAuth == nil || apiKeyAuth == nil || apiKeyService == nil {
+		return
+	}
+
+	commonMiddleware := []gin.HandlerFunc{
+		bodyLimit,
+		clientRequestID,
+		opsErrorLogger,
+		endpointNorm,
+		gin.HandlerFunc(jwtAuth),
+	}
+	keyedMiddleware := []gin.HandlerFunc{
+		useOwnedPlaygroundAPIKey(apiKeyService),
+		gin.HandlerFunc(apiKeyAuth),
+		compositeTarget,
+		requireGroup,
+	}
+
+	playground := r.Group("/api/v1/user/playground")
+	playground.Use(commonMiddleware...)
+	playground.GET("/api-keys", listPlaygroundAPIKeys(apiKeyService))
+
+	keyed := playground.Group("")
+	keyed.Use(keyedMiddleware...)
+	keyed.GET("/models", handlerModels)
+
+	responses := r.Group("/v1/playground")
+	responses.Use(commonMiddleware...)
+	responses.Use(keyedMiddleware...)
+	responses.POST("/responses", handlerResponses)
+}
+
+var _ playgroundAPIKeyStore = (*service.APIKeyService)(nil)

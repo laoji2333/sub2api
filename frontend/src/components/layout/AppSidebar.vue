@@ -487,6 +487,21 @@ const ServerIcon = {
     )
 }
 
+const PlaygroundIcon = {
+  render: () =>
+    h(
+      'svg',
+      { fill: 'none', viewBox: '0 0 24 24', stroke: 'currentColor', 'stroke-width': '1.5' },
+      [
+        h('path', {
+          'stroke-linecap': 'round',
+          'stroke-linejoin': 'round',
+          d: 'M9.75 3.75h4.5m-3 0v5.086L5.71 18.07A1.5 1.5 0 007 20.25h10a1.5 1.5 0 001.29-2.18l-5.54-9.234V3.75m-4.5 10.5h7.5'
+        })
+      ]
+    )
+}
+
 const BellIcon = {
   render: () =>
     h(
@@ -717,6 +732,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
   items.push(
     { path: '/codex', label: t('nav.codexGuide'), icon: TerminalIcon },
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
+    { path: '/playground', label: t('nav.playground'), icon: PlaygroundIcon },
     { path: '/batch-image', label: t('nav.batchImage'), icon: BatchImageIcon, hideInSimpleMode: true, featureFlag: flagBatchImageAccess },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/available-channels', label: t('nav.availableChannels'), icon: ChannelIcon, hideInSimpleMode: true, featureFlag: flagAvailableChannels },

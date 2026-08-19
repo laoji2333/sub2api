@@ -25,6 +25,7 @@ import (
 func RegisterGatewayRoutes(
 	r *gin.Engine,
 	h *handler.Handlers,
+	jwtAuth middleware.JWTAuthMiddleware,
 	apiKeyAuth middleware.APIKeyAuthMiddleware,
 	apiKeyService *service.APIKeyService,
 	subscriptionService *service.SubscriptionService,
@@ -173,6 +174,34 @@ func RegisterGatewayRoutes(
 			next(c)
 		}
 	}
+	chatCompletionsHandler := func(c *gin.Context) {
+		if isOpenAIResponsesCompatibleGatewayPlatform(c) {
+			h.OpenAIGateway.ChatCompletions(c)
+			return
+		}
+		h.Gateway.ChatCompletions(c)
+	}
+	responsesHandler := func(c *gin.Context) {
+		if isOpenAIResponsesCompatibleGatewayPlatform(c) {
+			h.OpenAIGateway.Responses(c)
+			return
+		}
+		h.Gateway.Responses(c)
+	}
+	registerPlaygroundGatewayRoutes(
+		r,
+		modelsHandler,
+		responsesHandler,
+		jwtAuth,
+		apiKeyAuth,
+		apiKeyService,
+		bodyLimit,
+		clientRequestID,
+		opsErrorLogger,
+		endpointNorm,
+		compositeTarget,
+		requireGroupAnthropic,
+	)
 
 	// API网关（Claude API兼容）
 	gateway := r.Group("/v1")
@@ -223,13 +252,7 @@ func RegisterGatewayRoutes(
 			h.OpenAIGateway.ResponsesWebSocket(c)
 		})
 		// OpenAI Chat Completions API: auto-route based on group platform
-		gateway.POST("/chat/completions", func(c *gin.Context) {
-			if isOpenAIResponsesCompatibleGatewayPlatform(c) {
-				h.OpenAIGateway.ChatCompletions(c)
-				return
-			}
-			h.Gateway.ChatCompletions(c)
-		})
+		gateway.POST("/chat/completions", chatCompletionsHandler)
 		gateway.POST("/embeddings", textBodyLimit, func(c *gin.Context) {
 			if !isOpenAIOnlyEndpointGatewayPlatform(c) {
 				service.MarkOpsClientBusinessLimited(c, service.OpsClientBusinessLimitedReasonLocalFeatureGate)
@@ -344,13 +367,6 @@ func RegisterGatewayRoutes(
 	}
 
 	// OpenAI Responses API（不带v1前缀的别名）— auto-route based on group platform
-	responsesHandler := func(c *gin.Context) {
-		if isOpenAIResponsesCompatibleGatewayPlatform(c) {
-			h.OpenAIGateway.Responses(c)
-			return
-		}
-		h.Gateway.Responses(c)
-	}
 	r.POST("/responses", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), compositeTarget, requireGroupAnthropic, responsesHandler)
 	r.POST("/responses/*subpath", bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), compositeTarget, requireGroupAnthropic, guardResponsesSubpath(responsesHandler))
 	r.POST("/alpha/search", textBodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), compositeTarget, requireGroupAnthropic, h.OpenAIGateway.AlphaSearch)

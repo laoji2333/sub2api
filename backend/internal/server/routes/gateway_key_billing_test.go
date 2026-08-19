@@ -95,6 +95,7 @@ func newKeyBillingRouteTestRouter(runMode string) (*gin.Engine, *keyBillingRoute
 	RegisterGatewayRoutes(
 		router,
 		&handler.Handlers{Gateway: gatewayHandler, OpenAIGateway: &handler.OpenAIGatewayHandler{}},
+		nil,
 		servermiddleware.NewAPIKeyAuthMiddleware(apiKeyService, nil, cfg),
 		apiKeyService,
 		nil,

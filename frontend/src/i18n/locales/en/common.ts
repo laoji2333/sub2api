@@ -167,6 +167,7 @@ export default {
     announcements: 'Announcements',
     apiKeys: 'API Keys',
     codexGuide: 'Initial Setup',
+    playground: 'Playground',
     batchImage: 'Batch Images',
     usage: 'Usage',
     redeem: 'Redeem',
