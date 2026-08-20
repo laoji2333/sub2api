@@ -389,6 +389,9 @@ func (h *SettingHandler) GetSettings(c *gin.Context) {
 
 		AffiliateEnabled: settings.AffiliateEnabled,
 
+		QQGroupNumber:  settings.QQGroupNumber,
+		QQGroupJoinURL: settings.QQGroupJoinURL,
+
 		AccountSchedulingThresholds: settings.AccountSchedulingThresholds,
 		AllowUserViewErrorRequests:  settings.AllowUserViewErrorRequests,
 	}
