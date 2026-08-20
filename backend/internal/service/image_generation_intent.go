@@ -36,6 +36,12 @@ func GroupAllowsImageGeneration(group *Group) bool {
 	return group == nil || group.AllowImageGeneration
 }
 
+// IsImageGenerationModel identifies model families whose primary output is an image.
+func IsImageGenerationModel(model string) bool {
+	model = strings.TrimSpace(model)
+	return isOpenAIImageGenerationModel(model) || isImageGenerationModel(model)
+}
+
 // IsImageGenerationIntent classifies requests that can produce generated images.
 func IsImageGenerationIntent(endpoint string, requestedModel string, body []byte) bool {
 	if IsImageGenerationEndpoint(endpoint) {

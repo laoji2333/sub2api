@@ -107,6 +107,22 @@ func TestIsImageGenerationIntent(t *testing.T) {
 	}
 }
 
+func TestIsImageGenerationModel(t *testing.T) {
+	for _, model := range []string{
+		"gpt-image-2",
+		"gemini-2.5-flash-image",
+		"models/gemini-3-pro-image-preview",
+		"grok-imagine",
+		"grok-imagine-image-quality",
+	} {
+		require.True(t, IsImageGenerationModel(model), "model=%s", model)
+	}
+
+	for _, model := range []string{"gpt-5.4", "gemini-2.5-flash", "grok-4.5", "claude-sonnet-4-6"} {
+		require.False(t, IsImageGenerationModel(model), "model=%s", model)
+	}
+}
+
 func TestIsImageGenerationIntentJSONSemantics(t *testing.T) {
 	largeInput := strings.Repeat("x", 1<<20)
 	tests := []struct {

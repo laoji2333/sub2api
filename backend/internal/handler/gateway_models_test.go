@@ -101,6 +101,51 @@ func TestGatewayModels_GeminiGroupFallsBackToGeminiModels(t *testing.T) {
 	require.NotContains(t, modelIDsForTest(got.Data), "claude-sonnet-4-6")
 }
 
+func TestGatewayPlaygroundModelsFiltersImageGenerationModels(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	groupID := int64(21)
+	h := newGatewayModelsHandlerForTest(
+		&gatewayModelsAccountRepoStub{
+			byGroup: map[int64][]service.Account{
+				groupID: {
+					{ID: 1, Platform: service.PlatformOpenAI},
+				},
+			},
+		},
+	)
+
+	rec := httptest.NewRecorder()
+	c, _ := gin.CreateTestContext(rec)
+	c.Request = httptest.NewRequest(http.MethodGet, "/api/v1/user/playground/models", nil)
+	c.Set(string(middleware2.ContextKeyAPIKey), &service.APIKey{
+		Group: &service.Group{ID: groupID, Platform: service.PlatformOpenAI},
+	})
+
+	h.PlaygroundModels(c)
+
+	require.Equal(t, http.StatusOK, rec.Code)
+	var got gatewayModelsResponseForTest
+	require.NoError(t, json.Unmarshal(rec.Body.Bytes(), &got))
+	ids := modelIDsForTest(got.Data)
+	require.Contains(t, ids, "gpt-5.4")
+	require.NotContains(t, ids, "gpt-image-1")
+	require.NotContains(t, ids, "gpt-image-1.5")
+	require.NotContains(t, ids, "gpt-image-2")
+
+	normalRec := httptest.NewRecorder()
+	normalContext, _ := gin.CreateTestContext(normalRec)
+	normalContext.Request = httptest.NewRequest(http.MethodGet, "/v1/models", nil)
+	normalContext.Set(string(middleware2.ContextKeyAPIKey), &service.APIKey{
+		Group: &service.Group{ID: groupID, Platform: service.PlatformOpenAI},
+	})
+	h.Models(normalContext)
+
+	var normal gatewayModelsResponseForTest
+	require.NoError(t, json.Unmarshal(normalRec.Body.Bytes(), &normal))
+	require.Contains(t, modelIDsForTest(normal.Data), "gpt-image-2")
+}
+
 func TestGatewayModels_Grok45AdvertisesReasoningEffortForGrokBuild(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

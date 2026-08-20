@@ -190,7 +190,7 @@ func RegisterGatewayRoutes(
 	}
 	registerPlaygroundGatewayRoutes(
 		r,
-		modelsHandler,
+		h.Gateway.PlaygroundModels,
 		responsesHandler,
 		jwtAuth,
 		apiKeyAuth,

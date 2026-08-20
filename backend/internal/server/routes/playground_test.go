@@ -5,14 +5,53 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
+	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	servermiddleware "github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
 )
+
+func TestRejectPlaygroundImageGeneration(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	for _, tc := range []struct {
+		name string
+		body string
+		want int
+	}{
+		{name: "gpt image model", body: `{"model":"gpt-image-2","input":"draw"}`, want: http.StatusBadRequest},
+		{name: "gemini image model", body: `{"model":"gemini-3.1-flash-image","input":"draw"}`, want: http.StatusBadRequest},
+		{name: "grok image model", body: `{"model":"grok-imagine-image","input":"draw"}`, want: http.StatusBadRequest},
+		{name: "native image tool", body: `{"model":"gpt-5.4","tools":[{"type":"image_generation"}],"input":"draw"}`, want: http.StatusBadRequest},
+		{name: "image namespace", body: `{"model":"gpt-5.4","tools":[{"type":"namespace","name":"image_gen"}],"input":"draw"}`, want: http.StatusBadRequest},
+		{name: "text request", body: `{"model":"gpt-5.4","input":"hello"}`, want: http.StatusNoContent},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			router := gin.New()
+			router.POST("/v1/playground/responses", rejectPlaygroundImageGeneration, func(c *gin.Context) {
+				body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
+				require.NoError(t, err)
+				require.JSONEq(t, tc.body, string(body))
+				c.Status(http.StatusNoContent)
+			})
+
+			recorder := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/v1/playground/responses", strings.NewReader(tc.body))
+			req.Header.Set("Content-Type", "application/json")
+			router.ServeHTTP(recorder, req)
+
+			require.Equal(t, tc.want, recorder.Code)
+			if tc.want == http.StatusBadRequest {
+				require.Contains(t, recorder.Body.String(), "Image generation is not supported in Playground")
+			}
+		})
+	}
+}
 
 type playgroundAPIKeyStoreStub struct {
 	key     *service.APIKey

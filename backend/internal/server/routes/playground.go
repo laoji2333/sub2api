@@ -4,14 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
 
+	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
 	"github.com/gin-gonic/gin"
+	"github.com/tidwall/gjson"
 )
 
 const playgroundAPIKeyIDHeader = "X-Playground-API-Key-ID"
@@ -19,6 +22,29 @@ const playgroundAPIKeyIDHeader = "X-Playground-API-Key-ID"
 type playgroundAPIKeyStore interface {
 	GetByID(ctx context.Context, id int64) (*service.APIKey, error)
 	List(ctx context.Context, userID int64, params pagination.PaginationParams, filters service.APIKeyListFilters) ([]service.APIKey, *pagination.PaginationResult, error)
+}
+
+func rejectPlaygroundImageGeneration(c *gin.Context) {
+	body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
+	if err != nil {
+		response.BadRequest(c, "Failed to read request body")
+		c.Abort()
+		return
+	}
+	resetRequestBody(c, body)
+
+	model := strings.TrimSpace(gjson.GetBytes(body, "model").String())
+	if service.IsImageGenerationModel(model) || service.IsImageGenerationIntent("/v1/responses", model, body) {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": gin.H{
+				"type":    "invalid_request_error",
+				"message": "Image generation is not supported in Playground",
+			},
+		})
+		c.Abort()
+		return
+	}
+	c.Next()
 }
 
 type playgroundAPIKeyOption struct {
@@ -174,7 +200,7 @@ func registerPlaygroundGatewayRoutes(
 	responses := r.Group("/v1/playground")
 	responses.Use(commonMiddleware...)
 	responses.Use(keyedMiddleware...)
-	responses.POST("/responses", handlerResponses)
+	responses.POST("/responses", rejectPlaygroundImageGeneration, handlerResponses)
 }
 
 var _ playgroundAPIKeyStore = (*service.APIKeyService)(nil)
