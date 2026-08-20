@@ -735,6 +735,59 @@ describe("admin SettingsView payment visible method controls", () => {
     );
   });
 
+  it("omits unchanged QQ fields when saving unrelated settings", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      qq_group_number: "",
+      qq_group_join_url: "",
+    });
+    updateSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      qq_group_number: "123456789",
+      qq_group_join_url: "https://qm.qq.com/example",
+    });
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const firstPayload = updateSettings.mock.calls[0][0] as Record<string, unknown>;
+    expect(firstPayload).not.toHaveProperty("qq_group_number");
+    expect(firstPayload).not.toHaveProperty("qq_group_join_url");
+
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    const secondPayload = updateSettings.mock.calls[1][0] as Record<string, unknown>;
+    expect(secondPayload).not.toHaveProperty("qq_group_number");
+    expect(secondPayload).not.toHaveProperty("qq_group_join_url");
+  });
+
+  it("submits empty QQ fields when the user explicitly clears them", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      qq_group_number: "123456789",
+      qq_group_join_url: "https://qm.qq.com/example",
+    });
+
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.get('[data-testid="qq-group-number"]').setValue("");
+    await wrapper.get('[data-testid="qq-group-join-url"]').setValue("");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        qq_group_number: "",
+        qq_group_join_url: "",
+      }),
+    );
+  });
+
   it("renders panel rate limit card and saves settings", async () => {
     getPanelRateLimitSettings.mockClear();
     updatePanelRateLimitSettings.mockClear();

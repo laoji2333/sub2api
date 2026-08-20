@@ -6310,6 +6310,7 @@
                   </label>
                   <input
                     v-model="form.qq_group_number"
+                    data-testid="qq-group-number"
                     type="text"
                     inputmode="numeric"
                     maxlength="20"
@@ -6328,6 +6329,7 @@
                   </label>
                   <input
                     v-model="form.qq_group_join_url"
+                    data-testid="qq-group-join-url"
                     type="url"
                     class="input"
                     :placeholder="t('admin.settings.site.qqGroupJoinUrlPlaceholder')"
@@ -10765,6 +10767,9 @@ const codexSyncedVersionLabel = computed(() => {
   });
 });
 
+let loadedQQGroupNumber = "";
+let loadedQQGroupJoinURL = "";
+
 async function loadSettings() {
   loading.value = true;
   loadFailed.value = false;
@@ -10778,6 +10783,8 @@ async function loadSettings() {
         (form as Record<string, unknown>)[key] = value;
       }
     }
+    loadedQQGroupNumber = form.qq_group_number.trim();
+    loadedQQGroupJoinURL = form.qq_group_join_url.trim();
     syncCaptchaProviderSelection();
     if (!form.claude_oauth_system_prompt_blocks?.trim()) {
       form.claude_oauth_system_prompt_blocks =
@@ -11473,6 +11480,13 @@ async function saveSettings() {
       allow_user_view_error_requests: form.allow_user_view_error_requests,
     };
 
+    if (payload.qq_group_number === loadedQQGroupNumber) {
+      delete payload.qq_group_number;
+    }
+    if (payload.qq_group_join_url === loadedQQGroupJoinURL) {
+      delete payload.qq_group_join_url;
+    }
+
     // 仅当 openai_fast_policy_settings 已成功从后端加载时才回写，
     // 否则省略整个字段，让后端保留既有规则（含默认值）。
     if (openaiFastPolicyLoaded.value) {
@@ -11520,6 +11534,8 @@ async function saveSettings() {
         (form as Record<string, unknown>)[key] = value;
       }
     }
+    loadedQQGroupNumber = form.qq_group_number.trim();
+    loadedQQGroupJoinURL = form.qq_group_join_url.trim();
     Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(updated));
     form.default_platform_quotas = normalizePlatformQuotasMap(updated.default_platform_quotas);
     form.account_scheduling_thresholds = normalizeAccountSchedulingThresholdsMap(
