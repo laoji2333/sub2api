@@ -22,6 +22,7 @@ import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 const messages: Record<string, string> = {
   'admin.usage.userDeletedBadge': 'Deleted',
   'usage.costDetails': 'Cost Breakdown',
+  'usage.cacheHitRate': 'Cache hit rate',
   'admin.usage.inputCost': 'Input Cost',
   'admin.usage.outputCost': 'Output Cost',
   'admin.usage.cacheCreationCost': 'Cache Creation Cost',
@@ -220,6 +221,55 @@ describe('admin UsageTable tooltip', () => {
     expect(text).toContain('$5.0000 / 1M tokens')
     expect(text).toContain('$30.0000 / 1M tokens')
     expect(text).toContain('$0.069568')
+  })
+
+  it('shows cache hit rate only when the row has cache read tokens', async () => {
+    const wrapper = mount(UsageTable, {
+      props: {
+        data: [{
+          ...baseImageRow,
+          request_id: 'req-admin-cache-hit',
+          billing_mode: 'token',
+          image_count: 0,
+          input_tokens: 1029,
+          output_tokens: 358,
+          cache_creation_tokens: 0,
+          cache_read_tokens: 64000,
+        }],
+        loading: false,
+        columns: [],
+      },
+      global: {
+        stubs: {
+          DataTable: DataTableStub,
+          EmptyState: true,
+          Icon: true,
+          Teleport: true,
+        },
+      },
+    })
+
+    await wrapper.findAll('.group.relative')[0].trigger('mouseenter')
+    await nextTick()
+
+    expect(wrapper.text()).toContain('Cache hit rate')
+    expect(wrapper.text()).toContain('98.42%')
+
+    await wrapper.setProps({
+      data: [{
+        ...baseImageRow,
+        request_id: 'req-admin-cache-miss',
+        billing_mode: 'token',
+        image_count: 0,
+        input_tokens: 1029,
+        output_tokens: 358,
+        cache_read_tokens: 0,
+      }],
+    })
+    await wrapper.findAll('.group.relative')[0].trigger('mouseenter')
+    await nextTick()
+
+    expect(wrapper.text()).not.toContain('Cache hit rate')
   })
 
   it('shows requested and upstream models separately for admin rows', () => {
