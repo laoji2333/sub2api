@@ -8264,6 +8264,50 @@
             @toggle-type="handleToggleType"
             @reorder="handleReorderProviders"
           />
+
+          <!-- External Payment -->
+          <div v-if="form.payment_enabled" class="card">
+            <div
+              class="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-dark-700"
+            >
+              <div>
+                <h2 class="text-base font-semibold text-gray-900 dark:text-white">
+                  {{ t("admin.settings.payment.externalPaymentTitle") }}
+                </h2>
+                <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                  {{ t("admin.settings.payment.externalPaymentDesc") }}
+                </p>
+              </div>
+              <Toggle v-model="form.payment_external_payment_enabled" />
+            </div>
+            <div class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+              <div>
+                <label class="input-label">
+                  {{ t("admin.settings.payment.externalPaymentName") }}
+                </label>
+                <input
+                  v-model="form.payment_external_payment_name"
+                  type="text"
+                  class="input"
+                  :placeholder="t('admin.settings.payment.externalPaymentNamePlaceholder')"
+                />
+              </div>
+              <div>
+                <label class="input-label">
+                  {{ t("admin.settings.payment.externalPaymentUrl") }}
+                </label>
+                <input
+                  v-model="form.payment_external_payment_url"
+                  type="url"
+                  class="input"
+                  placeholder="https://example.com/recharge"
+                />
+                <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">
+                  {{ t("admin.settings.payment.externalPaymentUrlHint") }}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div v-show="activeTab === 'email'" class="space-y-6">
@@ -9593,6 +9637,9 @@ const form = reactive<SettingsForm>({
   payment_enabled_types: [],
   payment_help_image_url: "",
   payment_help_text: "",
+  payment_external_payment_enabled: false,
+  payment_external_payment_name: "",
+  payment_external_payment_url: "",
   payment_product_name_prefix: "",
   payment_product_name_suffix: "",
   payment_load_balance_strategy: "round-robin",
@@ -11408,6 +11455,9 @@ async function saveSettings() {
       payment_product_name_suffix: form.payment_product_name_suffix,
       payment_help_image_url: form.payment_help_image_url,
       payment_help_text: form.payment_help_text,
+      payment_external_payment_enabled: form.payment_external_payment_enabled,
+      payment_external_payment_name: form.payment_external_payment_name.trim(),
+      payment_external_payment_url: form.payment_external_payment_url.trim(),
       payment_cancel_rate_limit_enabled: form.payment_cancel_rate_limit_enabled,
       payment_cancel_rate_limit_max:
         Number(form.payment_cancel_rate_limit_max) || 10,

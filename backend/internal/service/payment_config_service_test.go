@@ -10,6 +10,7 @@ import (
 	dbent "github.com/Wei-Shaw/sub2api/ent"
 	"github.com/Wei-Shaw/sub2api/ent/enttest"
 	"github.com/Wei-Shaw/sub2api/internal/payment"
+	infraerrors "github.com/Wei-Shaw/sub2api/internal/pkg/errors"
 
 	"entgo.io/ent/dialect"
 	entsql "entgo.io/ent/dialect/sql"
@@ -135,6 +136,9 @@ func TestParsePaymentConfig(t *testing.T) {
 			SettingLoadBalanceStrategy:           "least_amount",
 			SettingProductNamePrefix:             "PRE",
 			SettingProductNameSuffix:             "SUF",
+			SettingExternalPaymentEnabled:        "true",
+			SettingExternalPaymentName:           "External Recharge",
+			SettingExternalPaymentURL:            "https://pay.example.com/recharge",
 			SettingAlipayMobilePrecreateDeepLink: "true",
 		}
 		cfg := svc.parsePaymentConfig(vals)
@@ -174,6 +178,9 @@ func TestParsePaymentConfig(t *testing.T) {
 		}
 		if cfg.ProductNameSuffix != "SUF" {
 			t.Fatalf("ProductNameSuffix = %q, want %q", cfg.ProductNameSuffix, "SUF")
+		}
+		if !cfg.ExternalPaymentEnabled || cfg.ExternalPaymentName != "External Recharge" || cfg.ExternalPaymentURL != "https://pay.example.com/recharge" {
+			t.Fatalf("external payment config = (%v, %q, %q)", cfg.ExternalPaymentEnabled, cfg.ExternalPaymentName, cfg.ExternalPaymentURL)
 		}
 		if !cfg.AlipayMobilePrecreateDeepLink {
 			t.Fatal("expected AlipayMobilePrecreateDeepLink=true")
@@ -549,6 +556,70 @@ func TestUpdatePaymentConfig_PersistsExplicitEmptyAndFalseValues(t *testing.T) {
 			t.Fatalf("stored %q = %q, want %q", key, repo.values[key], value)
 		}
 	}
+}
+
+func TestUpdatePaymentConfig_ValidatesAndPersistsExternalPayment(t *testing.T) {
+	t.Parallel()
+
+	t.Run("enabled config is trimmed and persisted", func(t *testing.T) {
+		t.Parallel()
+		repo := &paymentConfigSettingRepoStub{values: map[string]string{}}
+		svc := &PaymentConfigService{settingRepo: repo}
+		enabled := true
+		name := "  External Recharge  "
+		externalURL := "  https://pay.example.com/recharge  "
+
+		err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{
+			ExternalPaymentEnabled: &enabled,
+			ExternalPaymentName:    &name,
+			ExternalPaymentURL:     &externalURL,
+		})
+		if err != nil {
+			t.Fatalf("UpdatePaymentConfig returned error: %v", err)
+		}
+		if repo.updates[SettingExternalPaymentEnabled] != "true" ||
+			repo.updates[SettingExternalPaymentName] != "External Recharge" ||
+			repo.updates[SettingExternalPaymentURL] != "https://pay.example.com/recharge" {
+			t.Fatalf("external payment updates = %v", repo.updates)
+		}
+	})
+
+	t.Run("enabled config requires a name", func(t *testing.T) {
+		t.Parallel()
+		repo := &paymentConfigSettingRepoStub{values: map[string]string{}}
+		svc := &PaymentConfigService{settingRepo: repo}
+		enabled := true
+		externalURL := "https://pay.example.com/recharge"
+
+		err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{
+			ExternalPaymentEnabled: &enabled,
+			ExternalPaymentURL:     &externalURL,
+		})
+		if infraerrors.Reason(err) != "INVALID_EXTERNAL_PAYMENT_NAME" {
+			t.Fatalf("reason = %q, want INVALID_EXTERNAL_PAYMENT_NAME (err=%v)", infraerrors.Reason(err), err)
+		}
+	})
+
+	t.Run("enabled config rejects non-http URLs", func(t *testing.T) {
+		t.Parallel()
+		repo := &paymentConfigSettingRepoStub{values: map[string]string{}}
+		svc := &PaymentConfigService{settingRepo: repo}
+		enabled := true
+		name := "External Recharge"
+		externalURL := "javascript:alert(1)"
+
+		err := svc.UpdatePaymentConfig(context.Background(), UpdatePaymentConfigRequest{
+			ExternalPaymentEnabled: &enabled,
+			ExternalPaymentName:    &name,
+			ExternalPaymentURL:     &externalURL,
+		})
+		if infraerrors.Reason(err) != "INVALID_EXTERNAL_PAYMENT_URL" {
+			t.Fatalf("reason = %q, want INVALID_EXTERNAL_PAYMENT_URL (err=%v)", infraerrors.Reason(err), err)
+		}
+		if len(repo.updates) != 0 {
+			t.Fatalf("invalid config wrote settings: %v", repo.updates)
+		}
+	})
 }
 
 func paymentConfigStrPtr(value string) *string {

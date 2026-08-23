@@ -282,6 +282,9 @@ type SystemSettings struct {
 	PaymentProductNameSuffix         string   `json:"payment_product_name_suffix"`
 	PaymentHelpImageURL              string   `json:"payment_help_image_url"`
 	PaymentHelpText                  string   `json:"payment_help_text"`
+	PaymentExternalPaymentEnabled    bool     `json:"payment_external_payment_enabled"`
+	PaymentExternalPaymentName       string   `json:"payment_external_payment_name"`
+	PaymentExternalPaymentURL        string   `json:"payment_external_payment_url"`
 
 	// Cancel rate limit
 	PaymentCancelRateLimitEnabled bool   `json:"payment_cancel_rate_limit_enabled"`

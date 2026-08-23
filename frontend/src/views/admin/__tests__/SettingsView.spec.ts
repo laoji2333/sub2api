@@ -491,6 +491,9 @@ const baseSettingsResponse = {
   payment_product_name_suffix: "",
   payment_help_image_url: "",
   payment_help_text: "",
+  payment_external_payment_enabled: false,
+  payment_external_payment_name: "",
+  payment_external_payment_url: "",
   payment_cancel_rate_limit_enabled: false,
   payment_cancel_rate_limit_max: 10,
   payment_cancel_rate_limit_window: 1,
@@ -1125,6 +1128,30 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(payload).not.toHaveProperty("payment_visible_method_wxpay_source");
     expect(payload).not.toHaveProperty("payment_visible_method_alipay_enabled");
     expect(payload).not.toHaveProperty("payment_visible_method_wxpay_enabled");
+  });
+
+  it("submits the external payment settings", async () => {
+    getSettings.mockResolvedValueOnce({
+      ...baseSettingsResponse,
+      payment_external_payment_enabled: true,
+      payment_external_payment_name: "  External Recharge  ",
+      payment_external_payment_url: "  https://pay.example.com/recharge  ",
+    });
+
+    const wrapper = mountView();
+
+    await flushPromises();
+    await openPaymentTab(wrapper);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payment_external_payment_enabled: true,
+        payment_external_payment_name: "External Recharge",
+        payment_external_payment_url: "https://pay.example.com/recharge",
+      }),
+    );
   });
 
   it("submits the admin recharge affiliate rebate setting", async () => {

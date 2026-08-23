@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -33,6 +34,9 @@ const (
 	SettingProductNameSuffix             = "PRODUCT_NAME_SUFFIX"
 	SettingHelpImageURL                  = "PAYMENT_HELP_IMAGE_URL"
 	SettingHelpText                      = "PAYMENT_HELP_TEXT"
+	SettingExternalPaymentEnabled        = "PAYMENT_EXTERNAL_PAYMENT_ENABLED"
+	SettingExternalPaymentName           = "PAYMENT_EXTERNAL_PAYMENT_NAME"
+	SettingExternalPaymentURL            = "PAYMENT_EXTERNAL_PAYMENT_URL"
 	SettingCancelRateLimitOn             = "CANCEL_RATE_LIMIT_ENABLED"
 	SettingCancelRateLimitMax            = "CANCEL_RATE_LIMIT_MAX"
 	SettingCancelWindowSize              = "CANCEL_RATE_LIMIT_WINDOW"
@@ -68,6 +72,9 @@ type PaymentConfig struct {
 	HelpImageURL             string  `json:"help_image_url"`
 	HelpText                 string  `json:"help_text"`
 	StripePublishableKey     string  `json:"stripe_publishable_key,omitempty"`
+	ExternalPaymentEnabled   bool    `json:"external_payment_enabled"`
+	ExternalPaymentName      string  `json:"external_payment_name"`
+	ExternalPaymentURL       string  `json:"external_payment_url"`
 
 	// Cancel rate limit settings
 	CancelRateLimitEnabled bool   `json:"cancel_rate_limit_enabled"`
@@ -100,6 +107,9 @@ type UpdatePaymentConfigRequest struct {
 	ProductNameSuffix         *string  `json:"product_name_suffix"`
 	HelpImageURL              *string  `json:"help_image_url"`
 	HelpText                  *string  `json:"help_text"`
+	ExternalPaymentEnabled    *bool    `json:"external_payment_enabled"`
+	ExternalPaymentName       *string  `json:"external_payment_name"`
+	ExternalPaymentURL        *string  `json:"external_payment_url"`
 
 	// Cancel rate limit settings
 	CancelRateLimitEnabled *bool   `json:"cancel_rate_limit_enabled"`
@@ -222,6 +232,7 @@ func (s *PaymentConfigService) GetPaymentConfig(ctx context.Context) (*PaymentCo
 		SettingEnabledPaymentTypes, SettingBalancePayDisabled, SettingBalanceRechargeMult, SettingSubscriptionUSDToCNYRate, SettingRechargeFeeRate, SettingLoadBalanceStrategy,
 		SettingProductNamePrefix, SettingProductNameSuffix,
 		SettingHelpImageURL, SettingHelpText,
+		SettingExternalPaymentEnabled, SettingExternalPaymentName, SettingExternalPaymentURL,
 		SettingCancelRateLimitOn, SettingCancelRateLimitMax,
 		SettingCancelWindowSize, SettingCancelWindowUnit, SettingCancelWindowMode,
 		SettingAlipayForceQRCode, SettingAlipayMobilePrecreateDeepLink,
@@ -255,6 +266,9 @@ func (s *PaymentConfigService) parsePaymentConfig(vals map[string]string) *Payme
 		ProductNameSuffix:         vals[SettingProductNameSuffix],
 		HelpImageURL:              vals[SettingHelpImageURL],
 		HelpText:                  vals[SettingHelpText],
+		ExternalPaymentEnabled:    vals[SettingExternalPaymentEnabled] == "true",
+		ExternalPaymentName:       vals[SettingExternalPaymentName],
+		ExternalPaymentURL:        vals[SettingExternalPaymentURL],
 
 		CancelRateLimitEnabled: vals[SettingCancelRateLimitOn] == "true",
 		CancelRateLimitMax:     pcParseInt(vals[SettingCancelRateLimitMax], 10),
@@ -343,6 +357,36 @@ func (s *PaymentConfigService) UpdatePaymentConfig(ctx context.Context, req Upda
 			return infraerrors.BadRequest("INVALID_RECHARGE_FEE_RATE", "recharge fee rate allows at most 2 decimal places")
 		}
 	}
+	if req.ExternalPaymentEnabled != nil || req.ExternalPaymentName != nil || req.ExternalPaymentURL != nil {
+		vals, err := s.settingRepo.GetMultiple(ctx, []string{
+			SettingExternalPaymentEnabled,
+			SettingExternalPaymentName,
+			SettingExternalPaymentURL,
+		})
+		if err != nil {
+			return fmt.Errorf("get external payment settings: %w", err)
+		}
+		enabled := vals[SettingExternalPaymentEnabled] == "true"
+		name := strings.TrimSpace(vals[SettingExternalPaymentName])
+		externalURL := strings.TrimSpace(vals[SettingExternalPaymentURL])
+		if req.ExternalPaymentEnabled != nil {
+			enabled = *req.ExternalPaymentEnabled
+		}
+		if req.ExternalPaymentName != nil {
+			name = strings.TrimSpace(*req.ExternalPaymentName)
+		}
+		if req.ExternalPaymentURL != nil {
+			externalURL = strings.TrimSpace(*req.ExternalPaymentURL)
+		}
+		if enabled {
+			if name == "" {
+				return infraerrors.BadRequest("INVALID_EXTERNAL_PAYMENT_NAME", "external payment name is required when enabled")
+			}
+			if !isValidExternalPaymentURL(externalURL) {
+				return infraerrors.BadRequest("INVALID_EXTERNAL_PAYMENT_URL", "external payment URL must be a valid HTTP or HTTPS URL")
+			}
+		}
+	}
 	m := make(map[string]string)
 	if req.Enabled != nil {
 		m[SettingPaymentEnabled] = formatBoolOrEmpty(req.Enabled)
@@ -392,6 +436,15 @@ func (s *PaymentConfigService) UpdatePaymentConfig(ctx context.Context, req Upda
 	if req.HelpText != nil {
 		m[SettingHelpText] = derefStr(req.HelpText)
 	}
+	if req.ExternalPaymentEnabled != nil {
+		m[SettingExternalPaymentEnabled] = formatBoolOrEmpty(req.ExternalPaymentEnabled)
+	}
+	if req.ExternalPaymentName != nil {
+		m[SettingExternalPaymentName] = strings.TrimSpace(*req.ExternalPaymentName)
+	}
+	if req.ExternalPaymentURL != nil {
+		m[SettingExternalPaymentURL] = strings.TrimSpace(*req.ExternalPaymentURL)
+	}
 	if req.CancelRateLimitEnabled != nil {
 		m[SettingCancelRateLimitOn] = formatBoolOrEmpty(req.CancelRateLimitEnabled)
 	}
@@ -426,6 +479,14 @@ func (s *PaymentConfigService) UpdatePaymentConfig(ctx context.Context, req Upda
 		m[SettingPaymentVisibleMethodWxpayEnabled] = formatBoolOrEmpty(req.VisibleMethodWxpayEnabled)
 	}
 	return s.settingRepo.SetMultiple(ctx, m)
+}
+
+func isValidExternalPaymentURL(raw string) bool {
+	parsed, err := url.Parse(raw)
+	if err != nil || parsed.Host == "" {
+		return false
+	}
+	return parsed.Scheme == "http" || parsed.Scheme == "https"
 }
 
 func formatBoolOrEmpty(v *bool) string {

@@ -4,6 +4,7 @@ import PaymentView from '../PaymentView.vue'
 import { PAYMENT_RECOVERY_STORAGE_KEY } from '@/components/payment/paymentFlow'
 import { currencySymbol, formatPaymentAmount } from '@/components/payment/currency'
 import AmountInput from '@/components/payment/AmountInput.vue'
+import PaymentMethodSelector from '@/components/payment/PaymentMethodSelector.vue'
 import SubscriptionPlanCard from '@/components/payment/SubscriptionPlanCard.vue'
 import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 import type { CheckoutInfoResponse, MethodLimit, SubscriptionPlan } from '@/types/payment'
@@ -114,6 +115,9 @@ function checkoutInfoFixture(overrides: Partial<CheckoutInfoResponse> = {}) {
     recharge_fee_rate: 0,
     help_text: '',
     help_image_url: '',
+    external_payment_enabled: false,
+    external_payment_name: '',
+    external_payment_url: '',
     stripe_publishable_key: '',
   }
 
@@ -152,7 +156,7 @@ function checkoutInfoWithPlansFixture(options: {
   return {
     data: {
       ...base,
-      methods: {
+      methods: options.checkout?.methods ?? {
         ...base.methods,
         wxpay: {
           ...base.methods.wxpay,
@@ -281,7 +285,7 @@ async function mountSubscriptionPlanList(planCount: number) {
   return wrapper
 }
 
-async function mountRecharge(currency: string) {
+async function mountRecharge(currency: string, checkout: Partial<CheckoutInfoResponse> = {}) {
   vi.useRealTimers()
   routeState.path = '/purchase'
   routeState.query = {}
@@ -294,7 +298,7 @@ async function mountRecharge(currency: string) {
   showError.mockReset()
   showInfo.mockReset()
   showWarning.mockReset()
-  getCheckoutInfo.mockReset().mockResolvedValue(checkoutInfoWithPlansFixture({ method: { currency } }))
+  getCheckoutInfo.mockReset().mockResolvedValue(checkoutInfoWithPlansFixture({ checkout, method: { currency } }))
   bridgeInvoke.mockReset()
   window.localStorage.clear()
   ;(window as Window & { WeixinJSBridge?: { invoke: typeof bridgeInvoke } }).WeixinJSBridge = undefined
@@ -323,6 +327,42 @@ describe('PaymentView recharge currency display', () => {
 
     expect(wrapper.findComponent(AmountInput).props('currencySymbol')).toBe(currencySymbol('HKD'))
     expect(wrapper.text()).toContain('payment.currentBalance: TOK0.00')
+  })
+
+  it('shows external payment as the sole recharge method when no providers are configured', async () => {
+    const wrapper = await mountRecharge('CNY', {
+      methods: {},
+      external_payment_enabled: true,
+      external_payment_name: 'External Recharge',
+      external_payment_url: 'https://pay.example.com/recharge',
+    })
+
+    const selector = wrapper.findComponent(PaymentMethodSelector)
+    expect(selector.exists()).toBe(true)
+    expect(selector.props('methods')).toEqual([])
+    expect(selector.props('externalMethod')).toEqual({
+      name: 'External Recharge',
+      url: 'https://pay.example.com/recharge',
+    })
+    expect(wrapper.text()).not.toContain('payment.notAvailable')
+    expect(wrapper.findComponent(AmountInput).exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('payment.createOrder')
+  })
+
+  it('hides disabled or unsafe external payment links', async () => {
+    const disabledWrapper = await mountRecharge('CNY', {
+      external_payment_enabled: false,
+      external_payment_name: 'External Recharge',
+      external_payment_url: 'https://pay.example.com/recharge',
+    })
+    expect(disabledWrapper.findComponent(PaymentMethodSelector).props('externalMethod')).toBeUndefined()
+
+    const unsafeWrapper = await mountRecharge('CNY', {
+      external_payment_enabled: true,
+      external_payment_name: 'External Recharge',
+      external_payment_url: 'javascript:alert(1)',
+    })
+    expect(unsafeWrapper.findComponent(PaymentMethodSelector).props('externalMethod')).toBeUndefined()
   })
 })
 

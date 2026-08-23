@@ -60,4 +60,27 @@ describe('PaymentMethodSelector', () => {
     expect(button.classes()).toContain('border-primary-500')
     expect(button.classes()).not.toContain('border-[#02A9F1]')
   })
+
+  it('appends the external payment link after configured methods', () => {
+    const wrapper = mount(PaymentMethodSelector, {
+      props: {
+        selected: 'wxpay',
+        methods: [{ type: 'wxpay', display_name: 'WeChat Pay', fee_rate: 0, available: true }],
+        externalMethod: {
+          name: 'External Recharge',
+          url: 'https://pay.example.com/recharge',
+        },
+      },
+    })
+
+    const gridChildren = wrapper.get('[data-testid="payment-method-grid"]').element.children
+    const externalLink = wrapper.get('[data-testid="external-payment-method"]')
+    expect(gridChildren[gridChildren.length - 1]).toBe(externalLink.element)
+    expect(externalLink.attributes()).toMatchObject({
+      href: 'https://pay.example.com/recharge',
+      target: '_blank',
+      rel: 'noopener noreferrer',
+      title: 'External Recharge',
+    })
+  })
 })

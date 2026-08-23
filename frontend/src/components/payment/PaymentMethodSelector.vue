@@ -38,6 +38,31 @@
           </span>
         </span>
       </button>
+      <a
+        v-if="externalMethod"
+        data-testid="external-payment-method"
+        :href="externalMethod.url"
+        target="_blank"
+        rel="noopener noreferrer"
+        :title="externalMethod.name"
+        class="relative flex h-[60px] min-w-0 flex-col items-center justify-center rounded-lg border border-gray-300 bg-white px-3 text-gray-700 transition-all hover:border-gray-400 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-200 dark:hover:border-dark-500"
+      >
+        <span class="flex w-full min-w-0 items-center justify-center gap-2">
+          <img :src="paymentIcon" :alt="externalMethod.name" class="h-7 w-7 shrink-0 object-contain" />
+          <span data-testid="external-payment-method-label" class="block min-w-0 truncate text-base font-semibold">
+            {{ externalMethod.name }}
+          </span>
+          <svg
+            class="h-3.5 w-3.5 shrink-0 text-gray-400 dark:text-gray-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5h5v5m0-5L10 14m8-1v5a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h5" />
+          </svg>
+        </span>
+      </a>
     </div>
   </div>
 </template>
@@ -59,9 +84,15 @@ export interface PaymentMethodOption {
   available: boolean
 }
 
+export interface ExternalPaymentMethodOption {
+  name: string
+  url: string
+}
+
 const props = defineProps<{
   methods: PaymentMethodOption[]
   selected: string
+  externalMethod?: ExternalPaymentMethodOption
 }>()
 
 const emit = defineEmits<{

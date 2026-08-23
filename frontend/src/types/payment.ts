@@ -73,6 +73,9 @@ export interface CheckoutInfoResponse {
   recharge_fee_rate: number
   help_text: string
   help_image_url: string
+  external_payment_enabled: boolean
+  external_payment_name: string
+  external_payment_url: string
   stripe_publishable_key: string
   /** When true, Alipay payments on mobile always show the QR code instead of redirecting */
   alipay_force_qrcode?: boolean
