@@ -13,6 +13,14 @@ export interface PlaygroundAPIKeyOption {
   group_platform: string
 }
 
+export interface ImagePlaygroundAPIKeyOption {
+  id: number
+  name: string
+  key: string
+  group_id: number
+  group_name: string
+}
+
 export interface PlaygroundModel {
   id: string
 }
@@ -34,6 +42,11 @@ export interface PlaygroundResponseRequest {
 
 export async function listPlaygroundAPIKeys(): Promise<PlaygroundAPIKeyOption[]> {
   const { data } = await apiClient.get<PlaygroundAPIKeyOption[]>('/user/playground/api-keys')
+  return Array.isArray(data) ? data : []
+}
+
+export async function listImagePlaygroundAPIKeys(): Promise<ImagePlaygroundAPIKeyOption[]> {
+  const { data } = await apiClient.get<ImagePlaygroundAPIKeyOption[]>('/user/playground/image-api-keys')
   return Array.isArray(data) ? data : []
 }
 

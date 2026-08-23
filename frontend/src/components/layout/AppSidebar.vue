@@ -733,6 +733,7 @@ function buildSelfNavItems(withDashboard: boolean): NavItem[] {
     { path: '/codex', label: t('nav.codexGuide'), icon: TerminalIcon },
     { path: '/keys', label: t('nav.apiKeys'), icon: KeyIcon },
     { path: '/playground', label: t('nav.playground'), icon: PlaygroundIcon },
+    { path: '/image-playground', label: t('nav.imagePlayground'), icon: BatchImageIcon },
     { path: '/batch-image', label: t('nav.batchImage'), icon: BatchImageIcon, hideInSimpleMode: true, featureFlag: flagBatchImageAccess },
     { path: '/usage', label: t('nav.usage'), icon: ChartIcon, hideInSimpleMode: true },
     { path: '/available-channels', label: t('nav.availableChannels'), icon: ChannelIcon, hideInSimpleMode: true, featureFlag: flagAvailableChannels },

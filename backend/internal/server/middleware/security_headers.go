@@ -124,8 +124,31 @@ func SecurityHeaders(cfg config.CSPConfig, getFrameSrcOrigins func() []string) g
 			}
 		}
 
+		imagePlaygroundApp := c.Request.URL.Path == "/image-playground-app" || strings.HasPrefix(c.Request.URL.Path, "/image-playground-app/")
+		if imagePlaygroundApp {
+			directives := strings.Split(finalPolicy, ";")
+			frameAncestorsFound := false
+			for i, directive := range directives {
+				fields := strings.Fields(strings.TrimSpace(directive))
+				if len(fields) == 0 || fields[0] != "frame-ancestors" {
+					continue
+				}
+				directives[i] = " frame-ancestors 'self'"
+				frameAncestorsFound = true
+				break
+			}
+			finalPolicy = strings.Join(directives, ";")
+			if !frameAncestorsFound {
+				finalPolicy = strings.TrimSuffix(strings.TrimSpace(finalPolicy), ";") + "; frame-ancestors 'self'"
+			}
+		}
+
 		c.Header("X-Content-Type-Options", "nosniff")
-		c.Header("X-Frame-Options", "DENY")
+		if imagePlaygroundApp {
+			c.Header("X-Frame-Options", "SAMEORIGIN")
+		} else {
+			c.Header("X-Frame-Options", "DENY")
+		}
 		c.Header("Referrer-Policy", "strict-origin-when-cross-origin")
 		if isAPIRoutePath(c) {
 			c.Next()
@@ -171,6 +194,13 @@ func enhanceCSPPolicy(policy string) string {
 	for _, required := range requiredCSPDirectiveValues {
 		if !directiveHasValue(policy, required.directive, required.value) {
 			policy = addToDirective(policy, required.directive, required.value)
+		}
+	}
+	if !directiveHasValue(policy, "frame-src", "'self'") {
+		if strings.Contains(policy, "frame-src ") {
+			policy = addToDirective(policy, "frame-src", "'self'")
+		} else {
+			policy = strings.TrimSuffix(strings.TrimSpace(policy), ";") + "; frame-src 'self'"
 		}
 	}
 

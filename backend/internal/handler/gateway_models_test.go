@@ -147,6 +147,34 @@ func TestGatewayPlaygroundModelsFiltersImageGenerationModels(t *testing.T) {
 	require.Contains(t, modelIDsForTest(normal.Data), "gpt-image-2")
 }
 
+func TestGatewayGroupSupportsModelUsesMappingsAndCustomModelList(t *testing.T) {
+	groupID := int64(41)
+	h := newGatewayModelsHandlerForTest(
+		&gatewayModelsAccountRepoStub{
+			byGroup: map[int64][]service.Account{
+				groupID: {
+					{
+						ID:       1,
+						Platform: service.PlatformOpenAI,
+						Credentials: map[string]any{
+							"model_mapping": map[string]any{
+								"gpt-image-2": "gpt-image-2",
+								"gpt-5.4":     "gpt-5.4",
+							},
+						},
+					},
+				},
+			},
+		},
+	)
+	group := &service.Group{ID: groupID, Platform: service.PlatformOpenAI}
+
+	require.True(t, h.GroupSupportsModel(context.Background(), group, "gpt-image-2"))
+
+	group.ModelsListConfig = service.GroupModelsListConfig{Enabled: true, Models: []string{"gpt-5.4"}}
+	require.False(t, h.GroupSupportsModel(context.Background(), group, "gpt-image-2"))
+}
+
 func TestGatewayModels_Grok45AdvertisesReasoningEffortForGrokBuild(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 

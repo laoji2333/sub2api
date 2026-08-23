@@ -726,6 +726,23 @@ func TestHasEmbeddedFrontend(t *testing.T) {
 	})
 }
 
+func TestFrontendServerServesEmbeddedImagePlayground(t *testing.T) {
+	server, err := NewFrontendServer(&mockSettingsProvider{settings: map[string]string{"test": "value"}})
+	require.NoError(t, err)
+
+	router := gin.New()
+	router.Use(server.Middleware())
+
+	w := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodGet, "/image-playground-app/", nil)
+	router.ServeHTTP(w, req)
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.Contains(t, w.Header().Get("Content-Type"), "text/html")
+	require.Contains(t, w.Body.String(), "GPT Image Playground")
+	require.NotContains(t, w.Body.String(), "AI API Gateway")
+}
+
 // Tests for legacy ServeEmbeddedFrontend function
 func TestServeEmbeddedFrontend(t *testing.T) {
 	t.Run("serves_static_files", func(t *testing.T) {

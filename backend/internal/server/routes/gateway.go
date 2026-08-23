@@ -196,6 +196,7 @@ func RegisterGatewayRoutes(
 		r,
 		h.Gateway.PlaygroundModels,
 		responsesHandler,
+		h.Gateway.GroupSupportsModel,
 		jwtAuth,
 		apiKeyAuth,
 		apiKeyService,

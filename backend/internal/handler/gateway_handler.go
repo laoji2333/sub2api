@@ -1081,6 +1081,40 @@ func (h *GatewayHandler) PlaygroundModels(c *gin.Context) {
 	})
 }
 
+// GroupSupportsModel reports whether the group's public model list contains modelID.
+func (h *GatewayHandler) GroupSupportsModel(ctx context.Context, group *service.Group, modelID string) bool {
+	if h == nil || h.gatewayService == nil || group == nil || strings.TrimSpace(modelID) == "" {
+		return false
+	}
+
+	groupID := group.ID
+	platform := group.Platform
+	var models []string
+	if platform == service.PlatformComposite {
+		models = h.compositeAvailableModels(ctx, &groupID)
+		if group.CustomModelsListEnabled() {
+			models = filterModelsByCustomList(models, defaultModelIDsForPlatform(platform), group.ModelsListConfig.Models)
+		} else if len(models) == 0 {
+			models = defaultModelIDsForPlatform(platform)
+		}
+	} else {
+		models = h.gatewayService.GetAvailableModels(ctx, &groupID, platform)
+		if group.CustomModelsListEnabled() {
+			fallbackModels := defaultModelIDsForPlatform(platform)
+			models = filterModelsByCustomList(customModelsListSource(platform, models, fallbackModels), fallbackModels, group.ModelsListConfig.Models)
+		} else if len(models) == 0 {
+			models = defaultModelIDsForPlatform(platform)
+		}
+	}
+
+	for _, model := range models {
+		if strings.TrimSpace(model) == modelID {
+			return true
+		}
+	}
+	return false
+}
+
 func (h *GatewayHandler) models(c *gin.Context, include func(string) bool) {
 	apiKey, _ := middleware2.GetAPIKeyFromContext(c)
 

@@ -228,6 +228,18 @@ const routes: RouteRecordRaw[] = [
     }
   },
   {
+    path: '/image-playground',
+    name: 'ImagePlayground',
+    component: () => import('@/views/user/ImagePlaygroundView.vue'),
+    meta: {
+      requiresAuth: true,
+      requiresAdmin: false,
+      title: 'Online Image Generation',
+      titleKey: 'imagePlayground.title',
+      descriptionKey: 'imagePlayground.description'
+    }
+  },
+  {
     path: '/codex',
     name: 'CodexGuide',
     component: () => import('@/views/user/CodexGuideView.vue'),

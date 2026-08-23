@@ -57,6 +57,9 @@ function injectPublicSettings(backendUrl: string): Plugin {
     transformIndexHtml: {
       order: 'pre',
       async handler(html) {
+        if (html.includes('/image-playground-app/assets/')) {
+          return html
+        }
         try {
           const response = await fetch(`${backendUrl}/api/v1/settings/public`, {
             signal: AbortSignal.timeout(2000)

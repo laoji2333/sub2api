@@ -24,6 +24,8 @@ type playgroundAPIKeyStore interface {
 	List(ctx context.Context, userID int64, params pagination.PaginationParams, filters service.APIKeyListFilters) ([]service.APIKey, *pagination.PaginationResult, error)
 }
 
+type playgroundModelSupport func(ctx context.Context, group *service.Group, modelID string) bool
+
 func rejectPlaygroundImageGeneration(c *gin.Context) {
 	body, err := pkghttputil.ReadRequestBodyWithPrealloc(c.Request)
 	if err != nil {
@@ -53,6 +55,14 @@ type playgroundAPIKeyOption struct {
 	GroupID       int64  `json:"group_id"`
 	GroupName     string `json:"group_name"`
 	GroupPlatform string `json:"group_platform"`
+}
+
+type imagePlaygroundAPIKeyOption struct {
+	ID        int64  `json:"id"`
+	Name      string `json:"name"`
+	Key       string `json:"key"`
+	GroupID   int64  `json:"group_id"`
+	GroupName string `json:"group_name"`
 }
 
 func listPlaygroundAPIKeys(store playgroundAPIKeyStore) gin.HandlerFunc {
@@ -90,6 +100,57 @@ func listPlaygroundAPIKeys(store playgroundAPIKeyStore) gin.HandlerFunc {
 				GroupID:       key.Group.ID,
 				GroupName:     key.Group.Name,
 				GroupPlatform: key.Group.Platform,
+			})
+		}
+
+		response.Success(c, options)
+	}
+}
+
+func listImagePlaygroundAPIKeys(store playgroundAPIKeyStore, supportsModel playgroundModelSupport) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subject, ok := middleware.GetAuthSubjectFromContext(c)
+		if !ok {
+			response.Unauthorized(c, "User not authenticated")
+			return
+		}
+		if store == nil || supportsModel == nil {
+			response.InternalError(c, "Image playground is unavailable")
+			return
+		}
+
+		keys, _, err := store.List(c.Request.Context(), subject.UserID, pagination.PaginationParams{
+			Page:      1,
+			PageSize:  1000,
+			SortBy:    "created_at",
+			SortOrder: "desc",
+		}, service.APIKeyListFilters{Status: service.StatusAPIKeyActive})
+		if err != nil {
+			response.ErrorFrom(c, err)
+			return
+		}
+
+		groupSupport := make(map[int64]bool)
+		checkedGroups := make(map[int64]bool)
+		options := make([]imagePlaygroundAPIKeyOption, 0, len(keys))
+		for i := range keys {
+			key := &keys[i]
+			if key.UserID != subject.UserID || !key.IsActive() || strings.TrimSpace(key.Key) == "" || key.GroupID == nil || key.Group == nil || !key.Group.IsActive() {
+				continue
+			}
+			if !checkedGroups[key.Group.ID] {
+				groupSupport[key.Group.ID] = supportsModel(c.Request.Context(), key.Group, "gpt-image-2")
+				checkedGroups[key.Group.ID] = true
+			}
+			if !groupSupport[key.Group.ID] {
+				continue
+			}
+			options = append(options, imagePlaygroundAPIKeyOption{
+				ID:        key.ID,
+				Name:      key.Name,
+				Key:       key.Key,
+				GroupID:   key.Group.ID,
+				GroupName: key.Group.Name,
 			})
 		}
 
@@ -161,6 +222,7 @@ func registerPlaygroundGatewayRoutes(
 	r *gin.Engine,
 	handlerModels gin.HandlerFunc,
 	handlerResponses gin.HandlerFunc,
+	supportsModel playgroundModelSupport,
 	jwtAuth middleware.JWTAuthMiddleware,
 	apiKeyAuth middleware.APIKeyAuthMiddleware,
 	apiKeyService *service.APIKeyService,
@@ -192,6 +254,7 @@ func registerPlaygroundGatewayRoutes(
 	playground := r.Group("/api/v1/user/playground")
 	playground.Use(commonMiddleware...)
 	playground.GET("/api-keys", listPlaygroundAPIKeys(apiKeyService))
+	playground.GET("/image-api-keys", listImagePlaygroundAPIKeys(apiKeyService, supportsModel))
 
 	keyed := playground.Group("")
 	keyed.Use(keyedMiddleware...)

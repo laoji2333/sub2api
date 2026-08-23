@@ -194,6 +194,27 @@ func TestSecurityHeaders(t *testing.T) {
 		// Default policy should contain these elements
 		assert.Contains(t, csp, "default-src 'self'")
 		assert.Contains(t, csp, TencentCaptchaDomain)
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "'self'"))
+	})
+
+	t.Run("allows_same_origin_image_playground_iframe", func(t *testing.T) {
+		cfg := config.CSPConfig{
+			Enabled: true,
+			Policy:  "default-src 'self'; frame-src https://example.com; frame-ancestors 'none'",
+		}
+		middleware := SecurityHeaders(cfg, nil)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request = httptest.NewRequest(http.MethodGet, "/image-playground-app/", nil)
+
+		middleware(c)
+
+		csp := w.Header().Get("Content-Security-Policy")
+		assert.Equal(t, "SAMEORIGIN", w.Header().Get("X-Frame-Options"))
+		assert.Contains(t, csp, "frame-ancestors 'self'")
+		assert.NotContains(t, csp, "frame-ancestors 'none'")
+		assert.Equal(t, 1, countDirectiveValue(csp, "frame-src", "'self'"))
 	})
 
 	t.Run("uses_default_policy_when_whitespace_only", func(t *testing.T) {

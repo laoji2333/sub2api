@@ -168,6 +168,7 @@ export default {
     apiKeys: 'API 密钥',
     codexGuide: '初始化启动',
     playground: '游乐场',
+    imagePlayground: '在线生图',
     batchImage: '批量生图',
     usage: '使用记录',
     redeem: '兑换',

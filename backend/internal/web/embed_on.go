@@ -98,6 +98,21 @@ func (s *FrontendServer) Middleware() gin.HandlerFunc {
 		if cleanPath == "" {
 			cleanPath = "index.html"
 		}
+		if strings.HasSuffix(cleanPath, "/") {
+			indexPath := cleanPath + "index.html"
+			if s.fileExists(indexPath) {
+				content, err := fs.ReadFile(s.distFS, indexPath)
+				if err != nil {
+					c.String(http.StatusInternalServerError, "Failed to read static index")
+					c.Abort()
+					return
+				}
+				c.Header("Cache-Control", "no-cache")
+				c.Data(http.StatusOK, "text/html; charset=utf-8", content)
+				c.Abort()
+				return
+			}
+		}
 
 		// For index.html or SPA routes, serve with injected settings
 		if cleanPath == "index.html" || !s.fileExists(cleanPath) {

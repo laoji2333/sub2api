@@ -147,6 +147,41 @@ func TestListPlaygroundAPIKeysReturnsSafeActiveGroupedOptions(t *testing.T) {
 	}}, payload.Data)
 }
 
+func TestListImagePlaygroundAPIKeysReturnsOwnedKeysForSupportedGroups(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	supportedGroupID := int64(4)
+	unsupportedGroupID := int64(5)
+	supportedGroup := &service.Group{ID: supportedGroupID, Name: "Images", Platform: service.PlatformOpenAI, Status: service.StatusActive}
+	unsupportedGroup := &service.Group{ID: unsupportedGroupID, Name: "Text", Platform: service.PlatformOpenAI, Status: service.StatusActive}
+	store := &playgroundAPIKeyStoreStub{keys: []service.APIKey{
+		{ID: 12, UserID: 7, Key: "TEST_REAL_KEY_VALUE", Name: "Main", Status: service.StatusAPIKeyActive, GroupID: &supportedGroupID, Group: supportedGroup},
+		{ID: 13, UserID: 7, Key: "TEST_UNSUPPORTED_KEY", Name: "Text", Status: service.StatusAPIKeyActive, GroupID: &unsupportedGroupID, Group: unsupportedGroup},
+		{ID: 14, UserID: 99, Key: "TEST_FOREIGN_KEY", Name: "Foreign", Status: service.StatusAPIKeyActive, GroupID: &supportedGroupID, Group: supportedGroup},
+	}}
+	router := gin.New()
+	router.Use(func(c *gin.Context) {
+		c.Set(string(servermiddleware.ContextKeyUser), servermiddleware.AuthSubject{UserID: 7})
+		c.Next()
+	})
+	router.GET("/image-api-keys", listImagePlaygroundAPIKeys(store, func(_ context.Context, group *service.Group, modelID string) bool {
+		return group.ID == supportedGroupID && modelID == "gpt-image-2"
+	}))
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/image-api-keys", nil))
+
+	require.Equal(t, http.StatusOK, w.Code)
+	require.NotContains(t, w.Body.String(), "TEST_FOREIGN_KEY")
+	require.NotContains(t, w.Body.String(), "TEST_UNSUPPORTED_KEY")
+	var payload struct {
+		Data []imagePlaygroundAPIKeyOption `json:"data"`
+	}
+	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &payload))
+	require.Equal(t, []imagePlaygroundAPIKeyOption{{
+		ID: 12, Name: "Main", Key: "TEST_REAL_KEY_VALUE", GroupID: 4, GroupName: "Images",
+	}}, payload.Data)
+}
+
 func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	router := gin.New()
@@ -156,6 +191,7 @@ func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 		router,
 		func(c *gin.Context) { c.Status(http.StatusOK) },
 		func(c *gin.Context) { c.Status(http.StatusOK) },
+		func(context.Context, *service.Group, string) bool { return false },
 		servermiddleware.JWTAuthMiddleware(noop),
 		servermiddleware.APIKeyAuthMiddleware(noop),
 		&service.APIKeyService{},
@@ -169,11 +205,15 @@ func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 
 	routes := router.Routes()
 	responsesRegistered := false
+	imageAPIKeysRegistered := false
 	legacyResponsesRegistered := false
 	chatCompletionsRegistered := false
 	for _, route := range routes {
 		if route.Method == http.MethodPost && route.Path == "/v1/playground/responses" {
 			responsesRegistered = true
+		}
+		if route.Method == http.MethodGet && route.Path == "/api/v1/user/playground/image-api-keys" {
+			imageAPIKeysRegistered = true
 		}
 		if route.Method == http.MethodPost && route.Path == "/api/v1/user/playground/responses" {
 			legacyResponsesRegistered = true
@@ -184,6 +224,7 @@ func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 	}
 
 	require.True(t, responsesRegistered)
+	require.True(t, imageAPIKeysRegistered)
 	require.False(t, legacyResponsesRegistered)
 	require.False(t, chatCompletionsRegistered)
 }

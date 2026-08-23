@@ -168,6 +168,7 @@ export default {
     apiKeys: 'API Keys',
     codexGuide: 'Initial Setup',
     playground: 'Playground',
+    imagePlayground: 'Image Playground',
     batchImage: 'Batch Images',
     usage: 'Usage',
     redeem: 'Redeem',
