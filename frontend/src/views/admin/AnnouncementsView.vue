@@ -136,6 +136,17 @@
                 <Icon name="edit" size="sm" />
               </button>
               <button
+                v-if="row.status !== 'archived'"
+                data-testid="announcement-archive"
+                @click="handleArchive(row)"
+                :disabled="archivingAnnouncementIds.has(row.id)"
+                class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-amber-50 hover:text-amber-600 disabled:cursor-not-allowed disabled:opacity-50 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
+                :title="t('admin.announcements.archive')"
+              >
+                <Icon name="inbox" size="sm" />
+              </button>
+              <button
+                data-testid="announcement-delete"
                 @click="handleDelete(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
                 :title="t('common.delete')"
@@ -572,6 +583,25 @@ async function handleSave() {
     appStore.showError(error.response?.data?.detail || (editingAnnouncement.value ? t('admin.announcements.failedToUpdate') : t('admin.announcements.failedToCreate')))
   } finally {
     saving.value = false
+  }
+}
+
+// ===== Archive =====
+const archivingAnnouncementIds = reactive(new Set<number>())
+
+async function handleArchive(row: Announcement) {
+  if (archivingAnnouncementIds.has(row.id)) return
+
+  archivingAnnouncementIds.add(row.id)
+  try {
+    await adminAPI.announcements.update(row.id, { status: 'archived' })
+    appStore.showSuccess(t('admin.announcements.archiveSuccess'))
+    await loadAnnouncements()
+  } catch (error: any) {
+    console.error('Failed to archive announcement:', error)
+    appStore.showError(error.response?.data?.detail || t('admin.announcements.failedToArchive'))
+  } finally {
+    archivingAnnouncementIds.delete(row.id)
   }
 }
 

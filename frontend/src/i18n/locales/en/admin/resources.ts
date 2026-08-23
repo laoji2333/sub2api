@@ -379,6 +379,8 @@ export default {
       createAnnouncement: 'Create Announcement',
       editAnnouncement: 'Edit Announcement',
       deleteAnnouncement: 'Delete Announcement',
+      archive: 'Archive',
+      archiveSuccess: 'Announcement archived',
       searchAnnouncements: 'Search announcements...',
       status: 'Status',
       allStatus: 'All Status',
@@ -442,6 +444,7 @@ export default {
       failedToLoad: 'Failed to load announcements',
       failedToCreate: 'Failed to create announcement',
       failedToUpdate: 'Failed to update announcement',
+      failedToArchive: 'Failed to archive announcement',
       failedToDelete: 'Failed to delete announcement',
       failedToLoadReadStatus: 'Failed to load read status',
       deleteConfirm: 'Are you sure you want to delete this announcement? This action cannot be undone.'

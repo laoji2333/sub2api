@@ -376,6 +376,8 @@ export default {
       createAnnouncement: '创建公告',
       editAnnouncement: '编辑公告',
       deleteAnnouncement: '删除公告',
+      archive: '归档',
+      archiveSuccess: '公告已归档',
       searchAnnouncements: '搜索公告...',
       status: '状态',
       allStatus: '全部状态',
@@ -439,6 +441,7 @@ export default {
       failedToLoad: '加载公告失败',
       failedToCreate: '创建公告失败',
       failedToUpdate: '更新公告失败',
+      failedToArchive: '归档公告失败',
       failedToDelete: '删除公告失败',
       failedToLoadReadStatus: '加载已读情况失败',
       deleteConfirm: '确定要删除该公告吗？此操作无法撤销。'
