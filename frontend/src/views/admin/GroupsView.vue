@@ -403,6 +403,32 @@
                 </span>
               </button>
               <button
+                data-testid="group-status-toggle"
+                :title="
+                  row.status === 'active'
+                    ? t('admin.groups.disable')
+                    : t('admin.groups.enable')
+                "
+                :disabled="togglingGroupIds.has(row.id)"
+                @click="handleToggleStatus(row)"
+                :class="[
+                  'flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                  row.status === 'active'
+                    ? 'hover:bg-orange-50 hover:text-orange-600 dark:hover:bg-orange-900/20 dark:hover:text-orange-400'
+                    : 'hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20 dark:hover:text-green-400',
+                ]"
+              >
+                <Icon v-if="row.status === 'active'" name="ban" size="sm" />
+                <Icon v-else name="checkCircle" size="sm" />
+                <span class="text-xs">
+                  {{
+                    row.status === "active"
+                      ? t("admin.groups.disable")
+                      : t("admin.groups.enable")
+                  }}
+                </span>
+              </button>
+              <button
                 v-if="row.platform === 'composite'"
                 @click="handleCompositeRoutes(row)"
                 class="flex flex-col items-center gap-0.5 rounded-lg p-1.5 text-gray-500 transition-colors hover:bg-gray-100 hover:text-cyan-600 dark:hover:bg-dark-700 dark:hover:text-cyan-400"
@@ -4969,6 +4995,7 @@ const sortSubmitting = ref(false);
 const editingGroup = ref<AdminGroup | null>(null);
 const deletingGroup = ref<AdminGroup | null>(null);
 const duplicatingGroupIds = reactive(new Set<number>());
+const togglingGroupIds = reactive(new Set<number>());
 const showRateMultipliersModal = ref(false);
 const rateMultipliersGroup = ref<AdminGroup | null>(null);
 const showRPMOverridesModal = ref(false);
@@ -6406,6 +6433,30 @@ const handleDuplicate = async (group: AdminGroup) => {
     );
   } finally {
     duplicatingGroupIds.delete(group.id);
+  }
+};
+
+const handleToggleStatus = async (group: AdminGroup) => {
+  if (togglingGroupIds.has(group.id)) return;
+
+  const newStatus = group.status === "active" ? "inactive" : "active";
+  togglingGroupIds.add(group.id);
+  try {
+    await adminAPI.groups.toggleStatus(group.id, newStatus);
+    appStore.showSuccess(
+      t(
+        newStatus === "active"
+          ? "admin.groups.groupEnabled"
+          : "admin.groups.groupDisabled",
+      ),
+    );
+    await loadGroups();
+  } catch (error: unknown) {
+    appStore.showError(
+      extractApiErrorMessage(error, t("admin.groups.failedToToggle")),
+    );
+  } finally {
+    togglingGroupIds.delete(group.id);
   }
 };
 

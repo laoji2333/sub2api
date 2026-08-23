@@ -8,6 +8,7 @@ import GroupsView from '@/views/admin/GroupsView.vue'
 const {
   listGroups,
   duplicateGroup,
+  toggleGroupStatus,
   getModelsListCandidates,
   getUsageSummary,
   getCapacitySummary,
@@ -17,6 +18,7 @@ const {
 } = vi.hoisted(() => ({
   listGroups: vi.fn(),
   duplicateGroup: vi.fn(),
+  toggleGroupStatus: vi.fn(),
   getModelsListCandidates: vi.fn(),
   getUsageSummary: vi.fn(),
   getCapacitySummary: vi.fn(),
@@ -30,6 +32,7 @@ vi.mock('@/api/admin', () => ({
     groups: {
       list: listGroups,
       duplicate: duplicateGroup,
+      toggleStatus: toggleGroupStatus,
       getModelsListCandidates,
       getUsageSummary,
       getCapacitySummary,
@@ -159,13 +162,14 @@ function mountView() {
   })
 }
 
-describe('GroupsView duplicate action', () => {
+describe('GroupsView row actions', () => {
   beforeEach(() => {
     localStorage.clear()
     vi.spyOn(console, 'error').mockImplementation(() => {})
     for (const fn of [
       listGroups,
       duplicateGroup,
+      toggleGroupStatus,
       getModelsListCandidates,
       getUsageSummary,
       getCapacitySummary,
@@ -189,6 +193,7 @@ describe('GroupsView duplicate action', () => {
       name: 'Primary (Copy)',
       status: 'inactive'
     })
+    toggleGroupStatus.mockResolvedValue({ ...sourceGroup, status: 'inactive' })
     getModelsListCandidates.mockResolvedValue([])
     getUsageSummary.mockResolvedValue([])
     getCapacitySummary.mockResolvedValue([])
@@ -268,6 +273,72 @@ describe('GroupsView duplicate action', () => {
     expect(showSuccess).toHaveBeenCalledWith('admin.groups.duplicateSuccess')
     expect(showError).toHaveBeenCalledWith('admin.groups.failedToLoad')
     expect(showError).not.toHaveBeenCalledWith('admin.groups.duplicateFailed')
+    wrapper.unmount()
+  })
+  it('places the status action after duplicate and disables an active group', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const duplicateButton = wrapper.get('[data-testid="group-duplicate"]')
+    const toggleButton = wrapper.get('[data-testid="group-status-toggle"]')
+    expect(
+      duplicateButton.element.compareDocumentPosition(toggleButton.element) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+    expect(toggleButton.text()).toContain('admin.groups.disable')
+
+    await toggleButton.trigger('click')
+    await flushPromises()
+
+    expect(toggleGroupStatus).toHaveBeenCalledWith(42, 'inactive')
+    expect(showSuccess).toHaveBeenCalledWith('admin.groups.groupDisabled')
+    expect(listGroups).toHaveBeenCalledTimes(2)
+    wrapper.unmount()
+  })
+
+  it('enables an inactive group and ignores repeated clicks while updating', async () => {
+    const inactiveGroup = { ...sourceGroup, status: 'inactive' as const }
+    listGroups.mockResolvedValueOnce({
+      items: [inactiveGroup],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      pages: 1
+    })
+    let resolveToggle!: (value: AdminGroup) => void
+    toggleGroupStatus.mockImplementationOnce(
+      () => new Promise<AdminGroup>((resolve) => { resolveToggle = resolve })
+    )
+    const wrapper = mountView()
+    await flushPromises()
+
+    const button = wrapper.get('[data-testid="group-status-toggle"]')
+    expect(button.text()).toContain('admin.groups.enable')
+    void button.trigger('click')
+    void button.trigger('click')
+    await wrapper.vm.$nextTick()
+
+    expect(toggleGroupStatus).toHaveBeenCalledTimes(1)
+    expect(toggleGroupStatus).toHaveBeenCalledWith(42, 'active')
+    expect(button.attributes('disabled')).toBeDefined()
+
+    resolveToggle({ ...inactiveGroup, status: 'active' })
+    await flushPromises()
+    expect(showSuccess).toHaveBeenCalledWith('admin.groups.groupEnabled')
+    wrapper.unmount()
+  })
+
+  it('shows the API error and restores the action when toggling fails', async () => {
+    toggleGroupStatus.mockRejectedValueOnce(new Error('toggle failed'))
+    const wrapper = mountView()
+    await flushPromises()
+
+    await wrapper.get('[data-testid="group-status-toggle"]').trigger('click')
+    await flushPromises()
+
+    expect(showError).toHaveBeenCalledWith('toggle failed')
+    expect(wrapper.get('[data-testid="group-status-toggle"]').attributes('disabled')).toBeUndefined()
+    expect(listGroups).toHaveBeenCalledTimes(1)
     wrapper.unmount()
   })
 })
