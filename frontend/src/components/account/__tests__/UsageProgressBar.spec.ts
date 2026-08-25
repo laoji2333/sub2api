@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import UsageProgressBar from '../UsageProgressBar.vue'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 vi.mock('vue-i18n', async () => {
   const actual = await vi.importActual<typeof import('vue-i18n')>('vue-i18n')
@@ -16,6 +17,7 @@ describe('UsageProgressBar', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     vi.setSystemTime(new Date('2026-03-17T00:00:00Z'))
+    setMoneyDisplaySymbol('$')
   })
 
   afterEach(() => {
@@ -145,5 +147,25 @@ describe('UsageProgressBar', () => {
     expect(wrapper.text()).toContain('120%')
     expect(wrapper.get('.h-1\\.5 > div').attributes('style')).toContain('width: 100%')
     expect(wrapper.get('.h-1\\.5 > div').classes()).toContain('bg-red-500')
+  })
+
+  it('账号成本固定显示美元符号，用户扣费使用配置符号', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mount(UsageProgressBar, {
+      props: {
+        label: '5h',
+        utilization: 50,
+        color: 'indigo',
+        windowStats: {
+          requests: 10,
+          tokens: 1000,
+          cost: 1.25,
+          user_cost: 2.5,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain('A $1.25')
+    expect(wrapper.text()).toContain('U ¥2.50')
   })
 })

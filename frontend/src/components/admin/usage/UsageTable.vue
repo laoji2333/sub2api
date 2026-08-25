@@ -209,7 +209,7 @@
               </div>
             </div>
             <div v-if="showAccountBilling && row.account_rate_multiplier != null" class="mt-0.5 text-[11px] text-orange-500 dark:text-orange-400">
-              A {{ moneyDisplaySymbol }}{{ accountBilled(row).toFixed(6) }}
+              A ${{ accountBilled(row).toFixed(6) }}
             </div>
           </div>
         </template>
@@ -485,7 +485,7 @@
             <div class="flex items-center justify-between gap-6">
               <span class="text-gray-400">{{ t('usage.accountBilled') }}</span>
               <span class="font-semibold text-green-400">
-                {{ moneyDisplaySymbol }}{{ accountBilled({
+                ${{ accountBilled({
                   total_cost: tooltipData?.total_cost,
                   account_stats_cost: tooltipData?.account_stats_cost,
                   account_rate_multiplier: tooltipData?.account_rate_multiplier,

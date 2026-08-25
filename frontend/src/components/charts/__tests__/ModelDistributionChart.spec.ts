@@ -63,6 +63,7 @@ describe('ModelDistributionChart', () => {
       total_tokens: 1000,
       cost: 1.5,
       actual_cost: 0.2,
+      account_cost: 0.3,
     },
     {
       model: 'model-b',
@@ -74,6 +75,7 @@ describe('ModelDistributionChart', () => {
       total_tokens: 500,
       cost: 0.5,
       actual_cost: 1.4,
+      account_cost: 1.6,
     },
   ]
 
@@ -214,5 +216,19 @@ describe('ModelDistributionChart', () => {
     expect(firstRow).toContain('¥0.200')
     expect(firstRow).toContain('$1.50')
     expect(firstRow).not.toContain('¥1.50')
+  })
+
+  it('keeps account cost in USD when the site symbol is configured', () => {
+    setMoneyDisplaySymbol('¥')
+    const wrapper = mount(ModelDistributionChart, {
+      props: { modelStats },
+      global: { stubs: { LoadingSpinner: true } },
+    })
+
+    const firstRow = wrapper.findAll('tbody tr')[0].text()
+    expect(firstRow).toContain('¥0.200')
+    expect(firstRow).toContain('$0.300')
+    expect(firstRow).toContain('$1.50')
+    expect(firstRow).not.toContain('¥0.300')
   })
 })

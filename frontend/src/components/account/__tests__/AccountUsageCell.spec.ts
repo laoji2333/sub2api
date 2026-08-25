@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import AccountUsageCell from '../AccountUsageCell.vue'
 import type { Account } from '@/types'
+import { setMoneyDisplaySymbol } from '@/composables/useMoneyDisplay'
 
 const { getUsage } = vi.hoisted(() => ({
   getUsage: vi.fn()
@@ -57,6 +58,7 @@ function makeAccount(overrides: Partial<Account>): Account {
 describe('AccountUsageCell', () => {
   beforeEach(() => {
     getUsage.mockReset()
+    setMoneyDisplaySymbol('$')
     Object.defineProperty(window, 'matchMedia', {
       writable: true,
       value: vi.fn().mockImplementation(() => ({
@@ -623,6 +625,7 @@ describe('AccountUsageCell', () => {
   })
 
   it('Key 账号会展示 today stats 徽章并带 A/U 提示', async () => {
+		setMoneyDisplaySymbol('¥')
 		const wrapper = mount(AccountUsageCell, {
 		  props: {
 		    account: makeAccount({
@@ -651,7 +654,7 @@ describe('AccountUsageCell', () => {
 		expect(wrapper.text()).toContain('1.0M req')
 		expect(wrapper.text()).toContain('1.0B')
 		expect(wrapper.text()).toContain('A $12.35')
-		expect(wrapper.text()).toContain('U $6.79')
+		expect(wrapper.text()).toContain('U ¥6.79')
 
 		const badges = wrapper.findAll('span[title]')
 		expect(badges.some(node => node.attributes('title') === 'usage.accountBilled')).toBe(true)
