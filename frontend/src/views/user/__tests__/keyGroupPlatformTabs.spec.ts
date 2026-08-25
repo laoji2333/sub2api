@@ -15,7 +15,7 @@ describe('API key group platform tabs', () => {
     expect(getDefaultKeyGroupPlatform([])).toBeNull()
   })
 
-  it('derives unique categories from the available groups', () => {
+  it('derives unique categories with OpenAI first', () => {
     expect(getKeyGroupPlatformTabs([
       group(1, 'deepseek'),
       group(2, 'openai'),
@@ -24,15 +24,16 @@ describe('API key group platform tabs', () => {
       group(5, 'zhipu'),
       group(6, 'anthropic')
     ])).toEqual([
-      { value: 'deepseek', label: 'DeepSeek' },
       { value: 'openai', label: 'OpenAI' },
+      { value: 'deepseek', label: 'DeepSeek' },
       { value: 'kimi', label: 'Kimi' },
       { value: 'zhipu', label: 'Zhipu GLM' },
       { value: 'anthropic', label: 'Claude' }
     ])
   })
 
-  it('defaults to the first available group category', () => {
+  it('defaults to OpenAI when available and otherwise keeps the first category', () => {
+    expect(getDefaultKeyGroupPlatform([group(1, 'deepseek'), group(2, 'openai')])).toBe('openai')
     expect(getDefaultKeyGroupPlatform([group(1, 'deepseek'), group(2, 'gemini')])).toBe('deepseek')
   })
 

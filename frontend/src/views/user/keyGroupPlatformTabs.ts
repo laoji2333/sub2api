@@ -9,7 +9,14 @@ export interface KeyGroupPlatformTab {
 export function getKeyGroupPlatformTabs(
   groups: ReadonlyArray<{ platform: GroupPlatform }>
 ): KeyGroupPlatformTab[] {
-  return Array.from(new Set(groups.map((group) => group.platform))).map((value) => ({
+  const platforms = Array.from(new Set(groups.map((group) => group.platform)))
+  const openAIIndex = platforms.indexOf('openai')
+  if (openAIIndex > 0) {
+    platforms.splice(openAIIndex, 1)
+    platforms.unshift('openai')
+  }
+
+  return platforms.map((value) => ({
     value,
     label: value === 'anthropic' ? 'Claude' : platformLabel(value)
   }))
@@ -18,7 +25,7 @@ export function getKeyGroupPlatformTabs(
 export function getDefaultKeyGroupPlatform(
   groups: ReadonlyArray<{ platform: GroupPlatform }>
 ): GroupPlatform | null {
-  return groups[0]?.platform ?? null
+  return getKeyGroupPlatformTabs(groups)[0]?.value ?? null
 }
 
 export function filterKeyGroupsByPlatform<T extends { platform: GroupPlatform }>(

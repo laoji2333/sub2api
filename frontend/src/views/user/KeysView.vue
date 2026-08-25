@@ -466,13 +466,36 @@
 
         <div>
           <label class="input-label">{{ t('keys.groupLabel') }}</label>
+          <div
+            v-if="keyGroupPlatformTabs.length > 0"
+            class="mb-2 grid grid-cols-3 gap-1"
+            data-test="key-group-platform-tabs"
+          >
+            <button
+              v-for="tab in keyGroupPlatformTabs"
+              :key="tab.value"
+              type="button"
+              :data-test="`key-group-platform-${tab.value}`"
+              :class="[
+                'flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors',
+                selectedKeyGroupPlatform === tab.value
+                  ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
+                  : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-dark-300 dark:hover:bg-dark-700 dark:hover:text-gray-100'
+              ]"
+              @click="selectKeyGroupPlatform(tab.value)"
+            >
+              <PlatformIcon :platform="tab.value" size="sm" />
+              <span class="truncate">{{ tab.label }}</span>
+            </button>
+          </div>
           <Select
-            v-model="formData.group_id"
+            :model-value="formData.group_id"
             :options="keyFormGroupOptions"
             :placeholder="t('keys.selectGroup')"
             :searchable="true"
             :search-placeholder="t('keys.searchGroup')"
             data-tour="key-form-group"
+            @update:model-value="handleKeyFormGroupChange"
           >
             <template #selected="{ option }">
               <GroupBadge
@@ -488,26 +511,6 @@
                 :peak-rate-multiplier="(option as unknown as GroupOption).peakRateMultiplier"
               />
               <span v-else class="text-gray-400">{{ t('keys.selectGroup') }}</span>
-            </template>
-            <template #dropdown-header>
-              <div class="grid grid-cols-3 gap-1" data-test="key-group-platform-tabs">
-                <button
-                  v-for="tab in keyGroupPlatformTabs"
-                  :key="tab.value"
-                  type="button"
-                  :data-test="`key-group-platform-${tab.value}`"
-                  :class="[
-                    'flex min-w-0 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium transition-colors',
-                    selectedKeyGroupPlatform === tab.value
-                      ? 'bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-dark-300 dark:hover:bg-dark-700 dark:hover:text-gray-100'
-                  ]"
-                  @click.stop="selectKeyGroupPlatform(tab.value)"
-                >
-                  <PlatformIcon :platform="tab.value" size="sm" />
-                  <span class="truncate">{{ tab.label }}</span>
-                </button>
-              </div>
             </template>
             <template #option="{ option, selected }">
               <GroupOptionItem
@@ -1535,6 +1538,25 @@ const selectKeyGroupPlatform = (platform: GroupPlatform) => {
   if (selectedGroup && selectedGroup.platform !== platform) {
     formData.value.group_id = null
   }
+}
+
+const handleKeyFormGroupChange = (value: string | number | boolean | null) => {
+  const groupId = typeof value === 'number'
+    ? value
+    : typeof value === 'string' && value.trim() !== ''
+      ? Number(value)
+      : Number.NaN
+  formData.value.group_id = Number.isFinite(groupId) ? groupId : null
+
+  if (showEditModal.value || formData.value.name.trim() || formData.value.group_id === null) {
+    return
+  }
+
+  const selectedGroup = groups.value.find((group) => group.id === formData.value.group_id)
+  if (!selectedGroup) return
+
+  const rateMultiplier = userGroupRates.value[selectedGroup.id] ?? selectedGroup.rate_multiplier
+  formData.value.name = `${selectedGroup.name} ${rateMultiplier}`
 }
 
 // Group dropdown search

@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount, type VueWrapper } from '@vue/test-utils'
 import { nextTick } from 'vue'
 
-import type { ApiKey } from '@/types'
+import type { ApiKey, Group } from '@/types'
 import KeysView from '../KeysView.vue'
 
 const {
@@ -136,6 +136,18 @@ const createApiKey = (overrides: Partial<ApiKey> = {}): ApiKey => ({
   reset_7d_at: null,
   ...overrides,
 })
+
+const createGroup = (overrides: Partial<Group> = {}): Group => ({
+  id: 1,
+  name: 'OpenAI',
+  description: null,
+  platform: 'openai',
+  rate_multiplier: 1,
+  is_exclusive: false,
+  status: 'active',
+  subscription_type: 'standard',
+  ...overrides,
+} as Group)
 
 const AppLayoutStub = {
   template: '<div><slot /></div>',
@@ -457,6 +469,37 @@ describe('user KeysView column settings', () => {
       },
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     )
+  })
+
+  it('shows OpenAI first above the group selector and fills an empty name from the selected group', async () => {
+    getAvailableGroups.mockResolvedValueOnce([
+      createGroup({ id: 2, name: 'grok', platform: 'grok', rate_multiplier: 0.1 }),
+      createGroup({ id: 1, name: 'OpenAI', platform: 'openai' }),
+    ])
+    const wrapper = await mountView()
+
+    await getButtonByText(wrapper, 'Create API Key').trigger('click')
+    await nextTick()
+
+    const tabs = wrapper.get('[data-test="key-group-platform-tabs"]')
+    const groupSelect = wrapper.findAllComponents({ name: 'Select' }).find(
+      (select) => select.attributes('data-tour') === 'key-form-group'
+    )
+    expect(groupSelect).toBeDefined()
+    expect(tabs.findAll('button').map((button) => button.text())).toEqual(['OpenAI', 'Grok'])
+    expect(
+      tabs.element.compareDocumentPosition(groupSelect!.element) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy()
+
+    await groupSelect!.vm.$emit('update:modelValue', 2)
+    await nextTick()
+    const nameInput = wrapper.get('input[data-tour="key-form-name"]')
+    expect((nameInput.element as HTMLInputElement).value).toBe('grok 0.1')
+
+    await nameInput.setValue('My key')
+    await groupSelect!.vm.$emit('update:modelValue', 1)
+    await nextTick()
+    expect((nameInput.element as HTMLInputElement).value).toBe('My key')
   })
 
   it('waits for the user to choose a group model before importing to CC Switch', async () => {
