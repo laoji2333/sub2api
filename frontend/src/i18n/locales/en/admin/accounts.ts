@@ -96,6 +96,7 @@ export default {
       schedulableEnabled: 'Scheduling enabled',
       schedulableDisabled: 'Scheduling disabled',
       failedToToggleSchedulable: 'Failed to toggle scheduling status',
+      failedToUpdatePriority: 'Failed to update account priority',
       groupCountTotal: '{count} groups total',
       platforms: {
         anthropic: 'Anthropic',

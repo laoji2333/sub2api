@@ -3,8 +3,9 @@ import { flushPromises, mount } from '@vue/test-utils'
 
 import AccountsView from '../AccountsView.vue'
 
-const { listAccounts } = vi.hoisted(() => ({
-  listAccounts: vi.fn()
+const { listAccounts, updateAccount } = vi.hoisted(() => ({
+  listAccounts: vi.fn(),
+  updateAccount: vi.fn()
 }))
 
 vi.mock('@/api/admin', () => ({
@@ -12,6 +13,7 @@ vi.mock('@/api/admin', () => ({
     accounts: {
       list: listAccounts,
       listWithEtag: vi.fn(),
+      update: updateAccount,
       getBatchTodayStats: vi.fn().mockResolvedValue({ stats: {} }),
       getUpstreamBillingProbeSettings: vi.fn().mockResolvedValue({ enabled: true, interval_minutes: 30 }),
       delete: vi.fn(),
@@ -41,7 +43,7 @@ vi.mock('vue-i18n', async () => {
 })
 
 const DataTableStub = {
-  props: ['columns'],
+  props: ['columns', 'data'],
   emits: ['sort'],
   template: `
     <div data-test="data-table">
@@ -49,8 +51,36 @@ const DataTableStub = {
         {{ column.sortable ? 'sortable' : 'fixed' }}
       </span>
       <button data-test="sort-priority" @click="$emit('sort', 'priority', 'desc')" />
+      <slot
+        v-if="data && data[0]"
+        name="cell-priority"
+        :row="data[0]"
+        :value="data[0].priority"
+      />
     </div>
   `
+}
+
+const account = {
+  id: 1,
+  name: 'Primary account',
+  platform: 'openai',
+  type: 'oauth',
+  proxy_id: null,
+  concurrency: 1,
+  priority: 5,
+  status: 'active',
+  error_message: null,
+  last_used_at: null,
+  expires_at: null,
+  auto_pause_on_expired: false,
+  created_at: '2026-08-26T00:00:00Z',
+  updated_at: '2026-08-26T00:00:00Z',
+  schedulable: true,
+  rate_limited_at: null,
+  rate_limit_reset_at: null,
+  overload_until: null,
+  temp_unschedulable_until: null
 }
 
 function mountView() {
@@ -104,6 +134,7 @@ describe('admin AccountsView priority column preferences', () => {
       page_size: 20,
       pages: 0
     })
+    updateAccount.mockReset()
   })
 
   it('shows priority as a sortable column for fresh preferences', async () => {
@@ -148,5 +179,31 @@ describe('admin AccountsView priority column preferences', () => {
       expect.arrayContaining(['today_stats', 'scheduler_score'])
     )
     expect(JSON.parse(localStorage.getItem('account-hidden-columns') || '[]')).not.toContain('priority')
+  })
+
+  it('edits priority inline and clamps values below one', async () => {
+    listAccounts.mockResolvedValue({
+      items: [account],
+      total: 1,
+      page: 1,
+      page_size: 20,
+      pages: 1
+    })
+    updateAccount.mockResolvedValue({ ...account, priority: 1 })
+
+    const wrapper = mountView()
+    await flushPromises()
+
+    const input = wrapper.get('[data-testid="account-priority-input-1"]')
+    expect(input.attributes('type')).toBe('number')
+    expect(input.attributes('min')).toBe('1')
+    expect(input.attributes('step')).toBe('1')
+
+    await input.setValue('0')
+    await input.trigger('blur')
+    await flushPromises()
+
+    expect(updateAccount).toHaveBeenCalledWith(1, { priority: 1 })
+    expect((input.element as HTMLInputElement).value).toBe('1')
   })
 })

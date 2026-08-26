@@ -378,8 +378,23 @@
               @probe="handleProbeUpstreamBilling(row)"
             />
           </template>
-          <template #cell-priority="{ value }">
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ value }}</span>
+          <template #cell-priority="{ row }">
+            <input
+              type="number"
+              min="1"
+              step="1"
+              inputmode="numeric"
+              :value="priorityInputValue(row)"
+              :disabled="updatingPriorities.has(row.id)"
+              :aria-label="t('admin.accounts.columns.priority')"
+              :data-testid="`account-priority-input-${row.id}`"
+              class="account-priority-input w-20 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 transition-colors hover:border-primary-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-wait disabled:opacity-60 dark:border-dark-600 dark:bg-dark-800 dark:text-gray-200 dark:hover:border-primary-500"
+              @click.stop
+              @input="handlePriorityInput(row.id, $event)"
+              @change="commitPriority(row)"
+              @blur="commitPriority(row)"
+              @keydown="handlePriorityKeydown(row, $event)"
+            />
           </template>
           <template #header-scheduler_score="{ column }">
             <div class="flex items-center">
@@ -608,6 +623,8 @@ const showSchedulePanel = ref(false)
 const scheduleAcc = ref<Account | null>(null)
 const scheduleModelOptions = ref<SelectOption[]>([])
 const togglingSchedulable = ref<number | null>(null)
+const priorityDrafts = reactive<Record<number, string>>({})
+const updatingPriorities = reactive(new Set<number>())
 const menu = reactive<{show:boolean, acc:Account|null, pos:{top:number, left:number}|null}>({ show: false, acc: null, pos: null })
 const exportingData = ref(false)
 const probingUpstreamBilling = reactive(new Set<number>())
@@ -2370,6 +2387,64 @@ const confirmCreateSparkShadow = async () => {
 }
 const handleDelete = (a: Account) => { deletingAcc.value = a; showDeleteDialog.value = true }
 const confirmDelete = async () => { if(!deletingAcc.value) return; try { await adminAPI.accounts.delete(deletingAcc.value.id); showDeleteDialog.value = false; deletingAcc.value = null; reload() } catch (error) { console.error('Failed to delete account:', error) } }
+const priorityInputValue = (account: Account) => priorityDrafts[account.id] ?? account.priority
+const handlePriorityInput = (accountID: number, event: Event) => {
+  priorityDrafts[accountID] = (event.target as HTMLInputElement).value
+}
+const cancelPriorityEdit = (account: Account, input: HTMLInputElement) => {
+  delete priorityDrafts[account.id]
+  input.value = String(account.priority)
+  input.blur()
+}
+const handlePriorityKeydown = (account: Account, event: KeyboardEvent) => {
+  const input = event.currentTarget as HTMLInputElement
+  if (event.key === 'Enter') {
+    event.preventDefault()
+    input.blur()
+  } else if (event.key === 'Escape') {
+    event.preventDefault()
+    cancelPriorityEdit(account, input)
+  }
+}
+const commitPriority = async (account: Account) => {
+  const rawValue = priorityDrafts[account.id]
+  if (rawValue === undefined || updatingPriorities.has(account.id)) return
+  if (rawValue.trim() === '') {
+    delete priorityDrafts[account.id]
+    return
+  }
+
+  const parsedValue = Number(rawValue)
+  if (!Number.isFinite(parsedValue)) {
+    delete priorityDrafts[account.id]
+    return
+  }
+
+  const priority = Math.max(1, Math.trunc(parsedValue))
+  if (priority === account.priority) {
+    delete priorityDrafts[account.id]
+    return
+  }
+
+  priorityDrafts[account.id] = String(priority)
+  updatingPriorities.add(account.id)
+  try {
+    const updated = await adminAPI.accounts.update(account.id, { priority })
+    patchAccountInList(updated)
+    enterAutoRefreshSilentWindow()
+    if (sortState.sort_by === 'priority') {
+      load().catch((error) => {
+        console.error('Failed to refresh priority-sorted account list:', error)
+      })
+    }
+  } catch (error) {
+    console.error('Failed to update account priority:', error)
+    appStore.showError(extractApiErrorMessage(error, t('admin.accounts.failedToUpdatePriority')))
+  } finally {
+    updatingPriorities.delete(account.id)
+    delete priorityDrafts[account.id]
+  }
+}
 const handleToggleSchedulable = async (a: Account) => {
   const nextSchedulable = !a.schedulable
   togglingSchedulable.value = a.id
@@ -2508,5 +2583,20 @@ onUnmounted(() => {
 
 .account-tools-menu-icon {
   @apply inline-flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md;
+}
+
+.account-priority-input:hover::-webkit-inner-spin-button,
+.account-priority-input:hover::-webkit-outer-spin-button,
+.account-priority-input:focus::-webkit-inner-spin-button,
+.account-priority-input:focus::-webkit-outer-spin-button {
+  -webkit-appearance: auto;
+  margin: 0;
+}
+
+@supports (-moz-appearance: auto) {
+  .account-priority-input:hover,
+  .account-priority-input:focus {
+    -moz-appearance: auto;
+  }
 }
 </style>
