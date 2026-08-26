@@ -49,6 +49,7 @@ func (r *channelMonitorRepository) Create(ctx context.Context, m *service.Channe
 		SetExtraModels(emptySliceIfNil(m.ExtraModels)).
 		SetGroupName(m.GroupName).
 		SetEnabled(m.Enabled).
+		SetSortOrder(m.SortOrder).
 		SetIntervalSeconds(m.IntervalSeconds).
 		SetJitterSeconds(m.JitterSeconds).
 		SetCreatedBy(m.CreatedBy).
@@ -121,6 +122,7 @@ func (r *channelMonitorRepository) Update(ctx context.Context, m *service.Channe
 		SetExtraModels(emptySliceIfNil(m.ExtraModels)).
 		SetGroupName(m.GroupName).
 		SetEnabled(m.Enabled).
+		SetSortOrder(m.SortOrder).
 		SetIntervalSeconds(m.IntervalSeconds).
 		SetJitterSeconds(m.JitterSeconds).
 		SetExtraHeaders(channelMonitorHeadersForPersistence(m)).
@@ -191,7 +193,8 @@ func (r *channelMonitorRepository) List(ctx context.Context, params service.Chan
 	rows, err := q.
 		Order(
 			dbent.Desc(channelmonitor.FieldEnabled),
-			dbent.Desc(channelmonitor.FieldID),
+			dbent.Asc(channelmonitor.FieldSortOrder),
+			dbent.Asc(channelmonitor.FieldID),
 		).
 		Offset((page - 1) * pageSize).
 		Limit(pageSize).
@@ -207,11 +210,65 @@ func (r *channelMonitorRepository) List(ctx context.Context, params service.Chan
 	return out, int64(total), nil
 }
 
+func (r *channelMonitorRepository) UpdateSortOrders(ctx context.Context, updates []service.ChannelMonitorSortOrderUpdate) error {
+	if len(updates) == 0 {
+		return nil
+	}
+
+	sortOrderByID := make(map[int64]int, len(updates))
+	ids := make([]int64, 0, len(updates))
+	for _, update := range updates {
+		if _, exists := sortOrderByID[update.ID]; !exists {
+			ids = append(ids, update.ID)
+		}
+		sortOrderByID[update.ID] = update.SortOrder
+	}
+
+	client := clientFromContext(ctx, r.client)
+	tx, err := client.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("begin channel monitor sort transaction: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	count, err := tx.ChannelMonitor.Query().
+		Where(channelmonitor.IDIn(ids...)).
+		Count(ctx)
+	if err != nil {
+		return fmt.Errorf("count channel monitors for sorting: %w", err)
+	}
+	if count != len(ids) {
+		return service.ErrChannelMonitorNotFound
+	}
+
+	for _, id := range ids {
+		affected, err := tx.ChannelMonitor.Update().
+			Where(channelmonitor.IDEQ(id)).
+			SetSortOrder(sortOrderByID[id]).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("update channel monitor sort order: %w", err)
+		}
+		if affected != 1 {
+			return service.ErrChannelMonitorNotFound
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return fmt.Errorf("commit channel monitor sort transaction: %w", err)
+	}
+	return nil
+}
+
 // ---------- 调度器辅助 ----------
 
 func (r *channelMonitorRepository) ListEnabled(ctx context.Context) ([]*service.ChannelMonitor, error) {
 	rows, err := r.client.ChannelMonitor.Query().
 		Where(channelmonitor.EnabledEQ(true)).
+		Order(
+			dbent.Asc(channelmonitor.FieldSortOrder),
+			dbent.Asc(channelmonitor.FieldID),
+		).
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("list enabled monitors: %w", err)
@@ -783,6 +840,7 @@ func entToServiceMonitor(row *dbent.ChannelMonitor) *service.ChannelMonitor {
 		ExtraModels:          extras,
 		GroupName:            row.GroupName,
 		Enabled:              row.Enabled,
+		SortOrder:            row.SortOrder,
 		IntervalSeconds:      row.IntervalSeconds,
 		JitterSeconds:        row.JitterSeconds,
 		LastCheckedAt:        row.LastCheckedAt,

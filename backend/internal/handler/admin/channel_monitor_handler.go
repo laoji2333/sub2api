@@ -97,6 +97,7 @@ type channelMonitorResponse struct {
 	ExtraModels         []string                             `json:"extra_models"`
 	GroupName           string                               `json:"group_name"`
 	Enabled             bool                                 `json:"enabled"`
+	SortOrder           int                                  `json:"sort_order"`
 	IntervalSeconds     int                                  `json:"interval_seconds"`
 	JitterSeconds       int                                  `json:"jitter_seconds"`
 	LastCheckedAt       *string                              `json:"last_checked_at"`
@@ -173,6 +174,7 @@ func channelMonitorToResponse(m *service.ChannelMonitor) *channelMonitorResponse
 		ExtraModels:         extras,
 		GroupName:           m.GroupName,
 		Enabled:             m.Enabled,
+		SortOrder:           m.SortOrder,
 		IntervalSeconds:     m.IntervalSeconds,
 		JitterSeconds:       m.JitterSeconds,
 		CreatedBy:           m.CreatedBy,
@@ -273,6 +275,40 @@ func (h *ChannelMonitorHandler) List(c *gin.Context) {
 		out = append(out, buildListItemResponse(m, summaries[m.ID]))
 	}
 	response.Paginated(c, out, total, page, pageSize)
+}
+
+type channelMonitorSortOrderRequest struct {
+	Updates []struct {
+		ID        int64 `json:"id"`
+		SortOrder int   `json:"sort_order"`
+	} `json:"updates" binding:"required,min=1"`
+}
+
+// UpdateSortOrder PUT /api/v1/admin/channel-monitors/sort-order
+func (h *ChannelMonitorHandler) UpdateSortOrder(c *gin.Context) {
+	var req channelMonitorSortOrderRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request: "+err.Error())
+		return
+	}
+
+	updates := make([]service.ChannelMonitorSortOrderUpdate, 0, len(req.Updates))
+	for _, update := range req.Updates {
+		if update.ID <= 0 || update.SortOrder < 0 {
+			response.BadRequest(c, "id must be positive and sort_order must be >= 0")
+			return
+		}
+		updates = append(updates, service.ChannelMonitorSortOrderUpdate{
+			ID:        update.ID,
+			SortOrder: update.SortOrder,
+		})
+	}
+
+	if err := h.monitorService.UpdateSortOrders(c.Request.Context(), updates); err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"message": "Sort order updated successfully"})
 }
 
 // batchSummaryFor 批量聚合 latest + 7d 可用率，避免每行 2 次 SQL（消除 N+1）。

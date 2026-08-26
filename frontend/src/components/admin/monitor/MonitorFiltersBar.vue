@@ -45,6 +45,14 @@
         <Icon name="refresh" size="md" :class="loading ? 'animate-spin' : ''" />
       </button>
       <button
+        @click="$emit('sort')"
+        class="btn btn-secondary"
+        :title="t('admin.channelMonitor.sortOrder')"
+      >
+        <Icon name="arrowsUpDown" size="md" class="mr-2" />
+        {{ t('admin.channelMonitor.sortOrder') }}
+      </button>
+      <button
         @click="$emit('manage-templates')"
         class="btn btn-secondary"
         :title="t('admin.channelMonitor.template.manageButton')"
@@ -84,6 +92,7 @@ defineProps<{
 defineEmits<{
   (e: 'reload'): void
   (e: 'create'): void
+  (e: 'sort'): void
   (e: 'manage-templates'): void
   (e: 'search-input'): void
 }>()

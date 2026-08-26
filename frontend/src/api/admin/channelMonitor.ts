@@ -74,6 +74,7 @@ export interface ChannelMonitor {
   extra_models: string[]
   group_name: string
   enabled: boolean
+  sort_order: number
   interval_seconds: number
   /** 每次调度在 interval 基础上 ± [0, jitter] 的随机偏移（秒），0 = 固定间隔 */
   jitter_seconds: number
@@ -204,6 +205,29 @@ export async function list(
     signal: options?.signal,
   })
   return data
+}
+
+/** Load all monitors in backend display order for the sort dialog. */
+export async function listAllForSort(): Promise<ChannelMonitor[]> {
+  const items: ChannelMonitor[] = []
+  let page = 1
+
+  while (true) {
+    const response = await list({ page, page_size: 100 })
+    items.push(...(response.items || []))
+    if (page >= response.pages) return items
+    page += 1
+  }
+}
+
+export interface SortOrderUpdate {
+  id: number
+  sort_order: number
+}
+
+/** Persist the display order used by admin lists and user-facing status cards. */
+export async function updateSortOrder(updates: SortOrderUpdate[]): Promise<void> {
+  await apiClient.put('/admin/channel-monitors/sort-order', { updates })
 }
 
 /**
@@ -345,6 +369,8 @@ export async function listHistory(
 
 export const channelMonitorAPI = {
   list,
+  listAllForSort,
+  updateSortOrder,
   get,
   create,
   duplicate,

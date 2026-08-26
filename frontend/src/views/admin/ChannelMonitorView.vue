@@ -58,6 +58,7 @@
           :loading="loading"
           @reload="reload"
           @create="openCreateDialog"
+          @sort="showSortDialog = true"
           @manage-templates="showTemplateManager = true"
           @search-input="handleSearch"
         />
@@ -149,6 +150,12 @@
       @updated="reload"
     />
 
+    <MonitorSortDialog
+      :show="showSortDialog"
+      @close="showSortDialog = false"
+      @saved="handleSortSaved"
+    />
+
     <MonitorRunResultDialog
       :show="showRunResult"
       :results="runResults"
@@ -193,6 +200,7 @@ import Toggle from '@/components/common/Toggle.vue'
 import MonitorFiltersBar from '@/components/admin/monitor/MonitorFiltersBar.vue'
 import MonitorFormDialog from '@/components/admin/monitor/MonitorFormDialog.vue'
 import MonitorTemplateManagerDialog from '@/components/admin/monitor/MonitorTemplateManagerDialog.vue'
+import MonitorSortDialog from '@/components/admin/monitor/MonitorSortDialog.vue'
 import MonitorRunResultDialog from '@/components/admin/monitor/MonitorRunResultDialog.vue'
 import MonitorPrimaryModelCell from '@/components/admin/monitor/MonitorPrimaryModelCell.vue'
 import MonitorActionsCell from '@/components/admin/monitor/MonitorActionsCell.vue'
@@ -224,6 +232,7 @@ const pagination = reactive({ page: 1, page_size: getPersistedPageSize(), total:
 
 const showDialog = ref(false)
 const showTemplateManager = ref(false)
+const showSortDialog = ref(false)
 const editing = ref<ChannelMonitor | null>(null)
 const showDeleteDialog = ref(false)
 const deleting = ref<ChannelMonitor | null>(null)
@@ -312,6 +321,11 @@ function openEditDialog(row: ChannelMonitor) {
 function closeDialog() {
   showDialog.value = false
   editing.value = null
+}
+
+function handleSortSaved() {
+  showSortDialog.value = false
+  void reload()
 }
 
 async function toggleEnabled(row: ChannelMonitor) {

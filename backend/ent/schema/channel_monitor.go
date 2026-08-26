@@ -77,6 +77,9 @@ func (ChannelMonitor) Fields() []ent.Field {
 			MaxLen(100),
 		field.Bool("enabled").
 			Default(true),
+		field.Int("sort_order").
+			Default(0).
+			Comment("渠道状态卡片显示顺序，数值越小越靠前"),
 		field.Int("interval_seconds").
 			Range(15, 3600),
 		field.Int("jitter_seconds").
@@ -128,6 +131,9 @@ func (ChannelMonitor) Edges() []ent.Edge {
 func (ChannelMonitor) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Fields("enabled", "last_checked_at"),
+		index.Fields("enabled", "sort_order", "id").
+			StorageKey("idx_channel_monitors_enabled_sort_order_id").
+			Annotations(entsql.DescColumns("enabled")),
 		index.Fields("provider"),
 		index.Fields("provider", "api_mode"),
 		index.Fields("group_name"),

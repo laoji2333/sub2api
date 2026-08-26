@@ -15,7 +15,7 @@ import (
 	entsql "entgo.io/ent/dialect/sql"
 )
 
-func TestChannelMonitorListOrdersEnabledFirstThenNewest(t *testing.T) {
+func TestChannelMonitorListOrdersEnabledFirstThenConfiguredOrder(t *testing.T) {
 	var capturedSQL string
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(captureEntQueryMatcher{actual: &capturedSQL}))
 	require.NoError(t, err)
@@ -41,5 +41,28 @@ func TestChannelMonitorListOrdersEnabledFirstThenNewest(t *testing.T) {
 	require.NoError(t, mock.ExpectationsWereMet())
 
 	normalized := normalizeSQLWhitespace(capturedSQL)
-	require.Contains(t, normalized, `ORDER BY "channel_monitors"."enabled" DESC, "channel_monitors"."id" DESC`)
+	require.Contains(t, normalized, `ORDER BY "channel_monitors"."enabled" DESC, "channel_monitors"."sort_order" ASC, "channel_monitors"."id" ASC`)
+}
+
+func TestChannelMonitorListEnabledOrdersByConfiguredOrder(t *testing.T) {
+	var capturedSQL string
+	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(captureEntQueryMatcher{actual: &capturedSQL}))
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = db.Close() })
+
+	driver := entsql.OpenDB(dialect.Postgres, db)
+	client := dbent.NewClient(dbent.Driver(driver))
+	t.Cleanup(func() { _ = client.Close() })
+	repo := &channelMonitorRepository{client: client, db: db}
+
+	mock.ExpectQuery("list enabled channel monitors").
+		WillReturnRows(sqlmock.NewRows(channelmonitor.Columns))
+
+	items, err := repo.ListEnabled(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, items)
+	require.NoError(t, mock.ExpectationsWereMet())
+
+	normalized := normalizeSQLWhitespace(capturedSQL)
+	require.Contains(t, normalized, `WHERE "channel_monitors"."enabled" ORDER BY "channel_monitors"."sort_order" ASC, "channel_monitors"."id" ASC`)
 }

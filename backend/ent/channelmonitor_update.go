@@ -209,6 +209,27 @@ func (_u *ChannelMonitorUpdate) SetNillableEnabled(v *bool) *ChannelMonitorUpdat
 	return _u
 }
 
+// SetSortOrder sets the "sort_order" field.
+func (_u *ChannelMonitorUpdate) SetSortOrder(v int) *ChannelMonitorUpdate {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
+}
+
+// SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
+func (_u *ChannelMonitorUpdate) SetNillableSortOrder(v *int) *ChannelMonitorUpdate {
+	if v != nil {
+		_u.SetSortOrder(*v)
+	}
+	return _u
+}
+
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *ChannelMonitorUpdate) AddSortOrder(v int) *ChannelMonitorUpdate {
+	_u.mutation.AddSortOrder(v)
+	return _u
+}
+
 // SetIntervalSeconds sets the "interval_seconds" field.
 func (_u *ChannelMonitorUpdate) SetIntervalSeconds(v int) *ChannelMonitorUpdate {
 	_u.mutation.ResetIntervalSeconds()
@@ -604,6 +625,12 @@ func (_u *ChannelMonitorUpdate) sqlSave(ctx context.Context) (_node int, err err
 	if value, ok := _u.mutation.Enabled(); ok {
 		_spec.SetField(channelmonitor.FieldEnabled, field.TypeBool, value)
 	}
+	if value, ok := _u.mutation.SortOrder(); ok {
+		_spec.SetField(channelmonitor.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
+		_spec.AddField(channelmonitor.FieldSortOrder, field.TypeInt, value)
+	}
 	if value, ok := _u.mutation.IntervalSeconds(); ok {
 		_spec.SetField(channelmonitor.FieldIntervalSeconds, field.TypeInt, value)
 	}
@@ -953,6 +980,27 @@ func (_u *ChannelMonitorUpdateOne) SetNillableEnabled(v *bool) *ChannelMonitorUp
 	if v != nil {
 		_u.SetEnabled(*v)
 	}
+	return _u
+}
+
+// SetSortOrder sets the "sort_order" field.
+func (_u *ChannelMonitorUpdateOne) SetSortOrder(v int) *ChannelMonitorUpdateOne {
+	_u.mutation.ResetSortOrder()
+	_u.mutation.SetSortOrder(v)
+	return _u
+}
+
+// SetNillableSortOrder sets the "sort_order" field if the given value is not nil.
+func (_u *ChannelMonitorUpdateOne) SetNillableSortOrder(v *int) *ChannelMonitorUpdateOne {
+	if v != nil {
+		_u.SetSortOrder(*v)
+	}
+	return _u
+}
+
+// AddSortOrder adds value to the "sort_order" field.
+func (_u *ChannelMonitorUpdateOne) AddSortOrder(v int) *ChannelMonitorUpdateOne {
+	_u.mutation.AddSortOrder(v)
 	return _u
 }
 
@@ -1380,6 +1428,12 @@ func (_u *ChannelMonitorUpdateOne) sqlSave(ctx context.Context) (_node *ChannelM
 	}
 	if value, ok := _u.mutation.Enabled(); ok {
 		_spec.SetField(channelmonitor.FieldEnabled, field.TypeBool, value)
+	}
+	if value, ok := _u.mutation.SortOrder(); ok {
+		_spec.SetField(channelmonitor.FieldSortOrder, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedSortOrder(); ok {
+		_spec.AddField(channelmonitor.FieldSortOrder, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.IntervalSeconds(); ok {
 		_spec.SetField(channelmonitor.FieldIntervalSeconds, field.TypeInt, value)

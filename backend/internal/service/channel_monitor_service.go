@@ -25,6 +25,7 @@ type ChannelMonitorRepository interface {
 	Update(ctx context.Context, m *ChannelMonitor) error
 	Delete(ctx context.Context, id int64) error
 	List(ctx context.Context, params ChannelMonitorListParams) ([]*ChannelMonitor, int64, error)
+	UpdateSortOrders(ctx context.Context, updates []ChannelMonitorSortOrderUpdate) error
 	FindByDuplicateOperationID(ctx context.Context, operationID string) (*ChannelMonitor, error)
 
 	// 调度器辅助
@@ -134,6 +135,21 @@ func (s *ChannelMonitorService) List(ctx context.Context, params ChannelMonitorL
 	return items, total, nil
 }
 
+func (s *ChannelMonitorService) UpdateSortOrders(ctx context.Context, updates []ChannelMonitorSortOrderUpdate) error {
+	if len(updates) == 0 {
+		return nil
+	}
+	for _, update := range updates {
+		if update.ID <= 0 || update.SortOrder < 0 {
+			return ErrChannelMonitorInvalidSortOrder
+		}
+	}
+	if err := s.repo.UpdateSortOrders(ctx, updates); err != nil {
+		return fmt.Errorf("update channel monitor sort orders: %w", err)
+	}
+	return nil
+}
+
 // Get 查询单个监控（解密 API Key）。
 func (s *ChannelMonitorService) Get(ctx context.Context, id int64) (*ChannelMonitor, error) {
 	m, err := s.repo.GetByID(ctx, id)
@@ -240,6 +256,7 @@ func (s *ChannelMonitorService) Duplicate(
 		ExtraModels:          append([]string{}, source.ExtraModels...),
 		GroupName:            source.GroupName,
 		Enabled:              false,
+		SortOrder:            source.SortOrder,
 		IntervalSeconds:      source.IntervalSeconds,
 		JitterSeconds:        source.JitterSeconds,
 		CreatedBy:            createdBy,
