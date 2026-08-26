@@ -331,9 +331,11 @@ describe('admin AccountsView — 账号行展示', () => {
       href: 'https://relay.example.com',
       target: '_blank',
       rel: 'noopener noreferrer',
+      title: 'relay-account',
     })
     expect(link.classes()).toEqual(expect.arrayContaining([
       'border-dotted',
+      'truncate',
       'text-gray-900',
       'dark:text-white',
     ]))
@@ -342,7 +344,9 @@ describe('admin AccountsView — 账号行展示', () => {
     expect(tooltip.props('content')).toBe('https://relay.example.com')
     expect(tooltip.props('widthClass')).toBe('w-max max-w-sm break-all')
     expect(tooltip.classes()).toEqual(expect.arrayContaining(['self-start']))
-    expect(wrapper.text()).toContain('oauth-account')
+    const oauthName = wrapper.findAll('span').find(node => node.text() === 'oauth-account')
+    expect(oauthName?.attributes('title')).toBe('oauth-account')
+    expect(oauthName?.classes()).toContain('truncate')
     expect(wrapper.text()).toContain('invalid-url')
 
     wrapper.unmount()

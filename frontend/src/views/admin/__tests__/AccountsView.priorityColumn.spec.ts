@@ -154,6 +154,16 @@ describe('admin AccountsView priority column preferences', () => {
     )
   })
 
+  it('keeps the name column at an approximately 30-character fixed width', async () => {
+    const wrapper = mountView()
+    await flushPromises()
+
+    const dataTable = wrapper.getComponent(DataTableStub)
+    const nameColumn = dataTable.props('columns').find((column: { key: string }) => column.key === 'name')
+
+    expect(nameColumn.class).toBe('w-[30ch] min-w-[30ch] max-w-[30ch]')
+  })
+
   it('preserves an existing preference that explicitly hides priority', async () => {
     localStorage.setItem('account-hidden-columns', JSON.stringify(['priority', 'today_stats']))
     localStorage.setItem('account-hidden-columns-version', 'scheduler-score-hidden-by-default')
