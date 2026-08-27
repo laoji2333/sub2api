@@ -49,7 +49,10 @@
         </template>
 
         <template #cell-account="{ row }">
-          <span class="text-sm text-gray-900 dark:text-white">{{ row.account?.name || '-' }}</span>
+          <span
+            class="block w-[16rem] max-w-[16rem] truncate text-sm text-gray-900 dark:text-white"
+            :title="row.account?.name || undefined"
+          >{{ formatAccountName(row.account?.name) }}</span>
         </template>
 
         <template #cell-model="{ row }">
@@ -594,6 +597,12 @@ const displayTokenPricePerMillion = (
 const showAccountBilling = props.showAccountBilling
 const showUpstreamEndpoint = props.showUpstreamEndpoint
 const ipGeoBatchLoading = ref(false)
+
+const formatAccountName = (name?: string | null): string => {
+  if (!name) return '-'
+  const characters = Array.from(name)
+  return characters.length > 30 ? `${characters.slice(0, 30).join('')}...` : name
+}
 
 const showIpGeoToolbar = computed(() => props.columns.some((col) => col.key === 'ip_address'))
 

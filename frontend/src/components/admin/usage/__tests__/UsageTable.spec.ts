@@ -85,6 +85,7 @@ const DataTableStub = {
   template: `
     <div>
       <div v-for="row in data" :key="row.request_id">
+        <slot name="cell-account" :row="row" />
         <slot name="cell-model" :row="row" :value="row.model" />
         <slot name="cell-billing_mode" :row="row" />
         <slot name="cell-tokens" :row="row" />
@@ -94,6 +95,32 @@ const DataTableStub = {
     </div>
   `,
 }
+
+describe('admin UsageTable account column', () => {
+  it('keeps a fixed width and truncates account names after 30 characters', () => {
+    const accountName = '123456789012345678901234567890extra'
+    const wrapper = mount(UsageTable, {
+      props: {
+        data: [{ request_id: 'req-long-account', account: { name: accountName } }],
+        loading: false,
+        columns: [{ key: 'account', label: 'Account' }],
+      },
+      global: {
+        stubs: {
+          DataTable: DataTableStub,
+          EmptyState: true,
+          Icon: true,
+          Teleport: true,
+        },
+      },
+    })
+
+    const accountCell = wrapper.get(`span[title="${accountName}"]`)
+    expect(accountCell.text()).toBe('123456789012345678901234567890...')
+    expect(accountCell.classes()).toContain('w-[16rem]')
+    expect(accountCell.classes()).toContain('max-w-[16rem]')
+  })
+})
 
 const baseImageRow = {
   request_id: 'req-admin-image',

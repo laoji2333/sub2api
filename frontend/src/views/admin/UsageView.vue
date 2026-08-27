@@ -649,7 +649,7 @@ const HIDDEN_COLUMNS_CURRENT_VERSION = 'request-id-hidden-by-default'
 const allColumns = computed(() => [
   { key: 'user', label: t('admin.usage.user'), sortable: false },
   { key: 'api_key', label: t('usage.apiKeyFilter'), sortable: false },
-  { key: 'account', label: t('admin.usage.account'), sortable: false },
+  { key: 'account', label: t('admin.usage.account'), sortable: false, class: 'w-[18rem] min-w-[18rem] max-w-[18rem]' },
   { key: 'model', label: t('usage.model'), sortable: true },
   { key: 'reasoning_effort', label: t('usage.reasoningEffort'), sortable: false },
   { key: 'endpoint', label: t('usage.endpoint'), sortable: false },
