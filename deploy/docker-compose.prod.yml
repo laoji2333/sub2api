@@ -1,38 +1,12 @@
 # =============================================================================
-# CVAPI Production - Railway PostgreSQL + External Redis (Plain TCP)
+# CVAPI Production - Local PostgreSQL + Local Redis
 # =============================================================================
 # Apply after docker-compose.yml or docker-compose.local.yml.
-# Requires Docker Compose 2.24.4+ because !override removes the inherited
-# dependencies on the local PostgreSQL and Redis healthchecks.
+# The base file owns database/Redis connectivity, health dependencies, and
+# persistence. This override only selects the immutable customized app image.
 # Keep all real credentials in .env; never commit them.
 # =============================================================================
 
 services:
   sub2api:
     image: ghcr.io/laoji2333/sub2api:${SUB2API_IMAGE_TAG:?SUB2API_IMAGE_TAG must be an immutable sha-* tag}
-    environment:
-      DATABASE_HOST: ${DATABASE_HOST:?DATABASE_HOST is required for Railway PostgreSQL}
-      DATABASE_PORT: ${DATABASE_PORT:?DATABASE_PORT is required for Railway PostgreSQL}
-      DATABASE_USER: ${DATABASE_USER:?DATABASE_USER is required for Railway PostgreSQL}
-      DATABASE_PASSWORD: ${DATABASE_PASSWORD:?DATABASE_PASSWORD is required for Railway PostgreSQL}
-      DATABASE_DBNAME: ${DATABASE_DBNAME:?DATABASE_DBNAME is required for Railway PostgreSQL}
-      DATABASE_SSLMODE: ${DATABASE_SSLMODE:-require}
-      REDIS_HOST: ${REDIS_HOST:?REDIS_HOST is required for external Redis}
-      REDIS_PORT: ${REDIS_PORT:?REDIS_PORT is required for external Redis}
-      REDIS_USERNAME: ${REDIS_USERNAME:-}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD is required for external Redis}
-      REDIS_DB: ${REDIS_DB:-0}
-      REDIS_ENABLE_TLS: "false"
-    depends_on: !override {}
-
-  # Preserve the old local PostgreSQL definition and data for an explicit
-  # rollback/recovery operation, but do not start it in production by default.
-  postgres:
-    profiles:
-      - local-postgres
-
-  # Preserve the local Redis definition and data for an explicit recovery
-  # operation, but do not start it in production by default.
-  redis:
-    profiles:
-      - local-redis

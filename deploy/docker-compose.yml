@@ -7,8 +7,9 @@
 #   3. Check logs: docker-compose logs -f sub2api
 #   4. Access: http://localhost:8080
 #
-# All configuration is done via environment variables.
-# No Setup Wizard needed - the system auto-initializes on first run.
+# Initial setup is driven by environment variables and writes config.yaml into
+# the persistent data volume. On later starts, container environment variables
+# override matching config.yaml keys; keep both sources aligned.
 # =============================================================================
 
 services:
@@ -28,7 +29,8 @@ services:
     ports:
       - "${BIND_HOST:-0.0.0.0}:${SERVER_PORT:-8080}:8080"
     volumes:
-      # Data persistence (config.yaml will be auto-generated here)
+      # Data persistence (config.yaml is generated on first setup). Matching
+      # container environment variables below override config.yaml at runtime.
       - sub2api_data:/app/data
       # Optional: Mount custom config.yaml (uncomment and create the file first)
       # Copy config.example.yaml to config.yaml, modify it, then uncomment:
@@ -227,7 +229,7 @@ services:
   # PostgreSQL Database
   # ===========================================================================
   postgres:
-    image: postgres:18-alpine
+    image: postgres:18.6-alpine
     container_name: sub2api-postgres
     restart: unless-stopped
     ulimits:
@@ -246,7 +248,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
-      # postgres:18-alpine 默认 PGDATA=/var/lib/postgresql/18/docker（位于镜像声明的匿名卷 /var/lib/postgresql 内）。
+      # postgres:18.6-alpine 默认 PGDATA=/var/lib/postgresql/18/docker（位于镜像声明的匿名卷 /var/lib/postgresql 内）。
       # 若不显式设置 PGDATA，则即使挂载了 postgres_data 到 /var/lib/postgresql/data，数据也不会落盘到该命名卷，
       # docker compose down/up 后会触发 initdb 重新初始化，导致用户/密码等数据丢失。
       - PGDATA=/var/lib/postgresql/data
