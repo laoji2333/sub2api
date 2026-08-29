@@ -217,6 +217,53 @@ export async function deleteAccount(id: number): Promise<{ message: string }> {
   return data
 }
 
+export interface AccountStickySession {
+  id: string
+  fingerprint: string
+  group_id: number
+  group_name: string
+  expires_in_seconds: number
+  user_id?: number
+  username?: string
+  user_email?: string
+  api_key_id?: number
+  api_key_name?: string
+  model?: string
+  request_id?: string
+  last_seen_at?: string
+}
+
+export interface AccountStickySessionsResponse {
+  sessions: AccountStickySession[]
+  total: number
+}
+
+export async function listStickySessions(
+  id: number,
+  options?: { signal?: AbortSignal }
+): Promise<AccountStickySessionsResponse> {
+  const { data } = await apiClient.get<AccountStickySessionsResponse>(
+    `/admin/accounts/${id}/sticky-sessions`,
+    { signal: options?.signal }
+  )
+  return data
+}
+
+export async function clearStickySession(id: number, sessionId: string): Promise<{ cleared: boolean }> {
+  const { data } = await apiClient.post<{ cleared: boolean }>(
+    `/admin/accounts/${id}/clear-sticky-session`,
+    { session_id: sessionId }
+  )
+  return data
+}
+
+export async function clearStickySessions(id: number): Promise<{ cleared_count: number }> {
+  const { data } = await apiClient.post<{ cleared_count: number }>(
+    `/admin/accounts/${id}/clear-sticky-sessions`
+  )
+  return data
+}
+
 /**
  * Toggle account status
  * @param id - Account ID
@@ -994,6 +1041,9 @@ export const accountsAPI = {
   update,
   checkMixedChannelRisk,
   delete: deleteAccount,
+  listStickySessions,
+  clearStickySession,
+  clearStickySessions,
   toggleStatus,
   testAccount,
   refreshCredentials,

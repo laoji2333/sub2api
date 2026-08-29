@@ -108,6 +108,7 @@ var ProviderSet = wire.NewSet(
 
 	// Cache implementations
 	NewGatewayCache,
+	ProvideAccountStickySessionManager,
 	NewBillingCache,
 	NewAPIKeyCache,
 	NewTempUnschedCache,

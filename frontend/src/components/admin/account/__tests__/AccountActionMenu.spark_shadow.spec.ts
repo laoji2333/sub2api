@@ -98,6 +98,23 @@ describe('AccountActionMenu — spark shadow 按钮可见性', () => {
     wrapper.unmount()
   })
 
+  it('点击「查看粘性会话」触发账号定向事件', async () => {
+    const account = makeAccount({ platform: 'openai', type: 'oauth' })
+    const wrapper = mount(AccountActionMenu, {
+      props: { show: true, account, position },
+      attachTo: document.body,
+    })
+
+    const clearButton = getBodyButtons().find(b => b.textContent?.includes('admin.accounts.viewStickySessions'))
+    expect(clearButton).toBeDefined()
+
+    clearButton!.click()
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.emitted('clear-sticky-sessions')?.[0]?.[0]).toMatchObject({ id: account.id })
+    wrapper.unmount()
+  })
+
   it('OpenAI OAuth 母账号（无 parent_account_id）显示「创建 spark 影子」按钮', () => {
     const account = makeAccount({ platform: 'openai', type: 'oauth', parent_account_id: null })
     const wrapper = mount(AccountActionMenu, {

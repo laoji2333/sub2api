@@ -61,6 +61,7 @@ type AccountHandler struct {
 	sessionLimitCache       service.SessionLimitCache
 	rpmCache                service.RPMCache
 	tokenCacheInvalidator   service.TokenCacheInvalidator
+	stickySessionManager    service.AccountStickySessionManager
 	grokImportProber        grokImportProber
 	upstreamBillingProbe    *service.UpstreamBillingProbeService
 	ollamaCloudUsage        *service.OllamaCloudUsageService
@@ -73,6 +74,10 @@ func (h *AccountHandler) SetUpstreamBillingProbeService(probe *service.UpstreamB
 
 func (h *AccountHandler) SetOllamaCloudUsageService(usage *service.OllamaCloudUsageService) {
 	h.ollamaCloudUsage = usage
+}
+
+func (h *AccountHandler) SetStickySessionManager(manager service.AccountStickySessionManager) {
+	h.stickySessionManager = manager
 }
 
 // NewAccountHandler creates a new admin account handler
@@ -1059,6 +1064,82 @@ func (h *AccountHandler) Delete(c *gin.Context) {
 	}
 
 	response.Success(c, gin.H{"message": "Account deleted successfully"})
+}
+
+func (h *AccountHandler) stickySessionAccountID(c *gin.Context) (int64, bool) {
+	accountID, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil {
+		response.BadRequest(c, "Invalid account ID")
+		return 0, false
+	}
+
+	if _, err := h.adminService.GetAccount(c.Request.Context(), accountID); err != nil {
+		response.ErrorFrom(c, err)
+		return 0, false
+	}
+	if h.stickySessionManager == nil {
+		response.Error(c, http.StatusServiceUnavailable, "Sticky session manager unavailable")
+		return 0, false
+	}
+	return accountID, true
+}
+
+// ListStickySessions returns current sticky bindings plus metadata that can be
+// reliably correlated from recent usage logs.
+// GET /api/v1/admin/accounts/:id/sticky-sessions
+func (h *AccountHandler) ListStickySessions(c *gin.Context) {
+	accountID, ok := h.stickySessionAccountID(c)
+	if !ok {
+		return
+	}
+	sessions, err := h.stickySessionManager.ListAccountStickySessions(c.Request.Context(), accountID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"sessions": sessions, "total": len(sessions)})
+}
+
+type clearStickySessionRequest struct {
+	SessionID string `json:"session_id" binding:"required"`
+}
+
+// ClearStickySession removes one listed binding only when it is still bound to
+// the selected account.
+// POST /api/v1/admin/accounts/:id/clear-sticky-session
+func (h *AccountHandler) ClearStickySession(c *gin.Context) {
+	accountID, ok := h.stickySessionAccountID(c)
+	if !ok {
+		return
+	}
+	var req clearStickySessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "session_id is required")
+		return
+	}
+	cleared, err := h.stickySessionManager.ClearAccountStickySession(c.Request.Context(), accountID, req.SessionID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"cleared": cleared})
+}
+
+// ClearStickySessions removes all current sticky bindings for one account
+// without changing scheduling state or any other runtime cache.
+// POST /api/v1/admin/accounts/:id/clear-sticky-sessions
+func (h *AccountHandler) ClearStickySessions(c *gin.Context) {
+	accountID, ok := h.stickySessionAccountID(c)
+	if !ok {
+		return
+	}
+
+	cleared, err := h.stickySessionManager.ClearAccountStickySessions(c.Request.Context(), accountID)
+	if err != nil {
+		response.ErrorFrom(c, err)
+		return
+	}
+	response.Success(c, gin.H{"cleared_count": cleared})
 }
 
 // TestAccountRequest represents the request body for testing an account
