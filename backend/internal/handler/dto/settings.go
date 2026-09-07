@@ -154,6 +154,7 @@ type SystemSettings struct {
 	MoneyDisplaySymbol          string           `json:"money_display_symbol"`
 	QQGroupNumber               string           `json:"qq_group_number"`
 	QQGroupJoinURL              string           `json:"qq_group_join_url"`
+	QQGroupDescription          string           `json:"qq_group_description"`
 	APIBaseURL                  string           `json:"api_base_url"`
 	ContactInfo                 string           `json:"contact_info"`
 	DocURL                      string           `json:"doc_url"`
@@ -387,6 +388,7 @@ type PublicSettings struct {
 	MoneyDisplaySymbol                  string                   `json:"money_display_symbol"`
 	QQGroupNumber                       string                   `json:"qq_group_number"`
 	QQGroupJoinURL                      string                   `json:"qq_group_join_url"`
+	QQGroupDescription                  string                   `json:"qq_group_description"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`

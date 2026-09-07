@@ -478,6 +478,7 @@ export interface SystemSettings {
   money_display_symbol: string;
   qq_group_number: string;
   qq_group_join_url: string;
+  qq_group_description: string;
   api_base_url: string;
   contact_info: string;
   doc_url: string;
@@ -824,6 +825,7 @@ export interface UpdateSettingsRequest {
   money_display_symbol?: string;
   qq_group_number?: string;
   qq_group_join_url?: string;
+  qq_group_description?: string;
   api_base_url?: string;
   contact_info?: string;
   doc_url?: string;

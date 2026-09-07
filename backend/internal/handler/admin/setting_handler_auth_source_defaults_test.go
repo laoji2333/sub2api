@@ -163,8 +163,9 @@ func TestSettingHandler_GetSettings_ReturnsQQGroupSettings(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	repo := &settingHandlerRepoStub{
 		values: map[string]string{
-			service.SettingKeyQQGroupNumber:  "123456789",
-			service.SettingKeyQQGroupJoinURL: "https://qm.qq.com/example",
+			service.SettingKeyQQGroupNumber:      "123456789",
+			service.SettingKeyQQGroupJoinURL:     "https://qm.qq.com/example",
+			service.SettingKeyQQGroupDescription: "第一行\n第二行",
 		},
 	}
 	svc := service.NewSettingService(repo, &config.Config{Default: config.DefaultConfig{UserConcurrency: 5}})
@@ -183,6 +184,7 @@ func TestSettingHandler_GetSettings_ReturnsQQGroupSettings(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, "123456789", data["qq_group_number"])
 	require.Equal(t, "https://qm.qq.com/example", data["qq_group_join_url"])
+	require.Equal(t, "第一行\n第二行", data["qq_group_description"])
 }
 
 func TestSettingHandler_UpdateSettings_PreservesOmittedAuthSourceDefaults(t *testing.T) {

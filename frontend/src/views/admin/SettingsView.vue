@@ -6364,6 +6364,23 @@
                     {{ t("admin.settings.site.qqGroupJoinUrlHint") }}
                   </p>
                 </div>
+                <div>
+                  <label
+                    class="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                  >
+                    {{ t("admin.settings.site.qqGroupDescription") }}
+                  </label>
+                  <textarea
+                    v-model="form.qq_group_description"
+                    data-testid="qq-group-description"
+                    rows="4"
+                    class="input min-h-24 resize-y py-2"
+                    :placeholder="t('admin.settings.site.qqGroupDescriptionPlaceholder')"
+                  ></textarea>
+                  <p class="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+                    {{ t("admin.settings.site.qqGroupDescriptionHint") }}
+                  </p>
+                </div>
               </div>
 
               <!-- API Base URL -->
@@ -9664,6 +9681,7 @@ const form = reactive<SettingsForm>({
   money_display_symbol: "$",
   qq_group_number: "",
   qq_group_join_url: "",
+  qq_group_description: "",
   api_base_url: "",
   contact_info: "",
   doc_url: "",
@@ -10869,6 +10887,7 @@ const codexSyncedVersionLabel = computed(() => {
 
 let loadedQQGroupNumber = "";
 let loadedQQGroupJoinURL = "";
+let loadedQQGroupDescription = "";
 
 async function loadSettings() {
   loading.value = true;
@@ -10885,6 +10904,7 @@ async function loadSettings() {
     }
     loadedQQGroupNumber = form.qq_group_number.trim();
     loadedQQGroupJoinURL = form.qq_group_join_url.trim();
+    loadedQQGroupDescription = form.qq_group_description.trim();
     syncCaptchaProviderSelection();
     if (!form.claude_oauth_system_prompt_blocks?.trim()) {
       form.claude_oauth_system_prompt_blocks =
@@ -11307,6 +11327,7 @@ async function saveSettings() {
       money_display_symbol: form.money_display_symbol.trim() || "$",
       qq_group_number: form.qq_group_number.trim(),
       qq_group_join_url: form.qq_group_join_url.trim(),
+      qq_group_description: form.qq_group_description.trim(),
       api_base_url: form.api_base_url,
       contact_info: form.contact_info,
       doc_url: form.doc_url,
@@ -11592,6 +11613,9 @@ async function saveSettings() {
     if (payload.qq_group_join_url === loadedQQGroupJoinURL) {
       delete payload.qq_group_join_url;
     }
+    if (payload.qq_group_description === loadedQQGroupDescription) {
+      delete payload.qq_group_description;
+    }
 
     // 仅当 openai_fast_policy_settings 已成功从后端加载时才回写，
     // 否则省略整个字段，让后端保留既有规则（含默认值）。
@@ -11642,6 +11666,7 @@ async function saveSettings() {
     }
     loadedQQGroupNumber = form.qq_group_number.trim();
     loadedQQGroupJoinURL = form.qq_group_join_url.trim();
+    loadedQQGroupDescription = form.qq_group_description.trim();
     Object.assign(authSourceDefaults, buildAuthSourceDefaultsState(updated));
     form.default_platform_quotas = normalizePlatformQuotasMap(updated.default_platform_quotas);
     form.account_scheduling_thresholds = normalizeAccountSchedulingThresholdsMap(

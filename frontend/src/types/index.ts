@@ -237,6 +237,7 @@ export interface PublicSettings {
   money_display_symbol?: string
   qq_group_number?: string
   qq_group_join_url?: string
+  qq_group_description?: string
   api_base_url: string
   contact_info: string
   doc_url: string

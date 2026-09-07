@@ -244,8 +244,9 @@ func TestSettingService_UpdateSettings_PersistsQQGroup(t *testing.T) {
 	repo := &settingUpdateRepoStub{}
 	svc := NewSettingService(repo, &config.Config{})
 	settings := &SystemSettings{
-		QQGroupNumber:  " 123456789 ",
-		QQGroupJoinURL: " https://qm.qq.com/example ",
+		QQGroupNumber:      " 123456789 ",
+		QQGroupJoinURL:     " https://qm.qq.com/example ",
+		QQGroupDescription: " 第一行\n第二行 ",
 	}
 
 	err := svc.UpdateSettings(context.Background(), settings)
@@ -253,8 +254,10 @@ func TestSettingService_UpdateSettings_PersistsQQGroup(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "123456789", repo.updates[SettingKeyQQGroupNumber])
 	require.Equal(t, "https://qm.qq.com/example", repo.updates[SettingKeyQQGroupJoinURL])
+	require.Equal(t, "第一行\n第二行", repo.updates[SettingKeyQQGroupDescription])
 	require.Equal(t, "123456789", settings.QQGroupNumber)
 	require.Equal(t, "https://qm.qq.com/example", settings.QQGroupJoinURL)
+	require.Equal(t, "第一行\n第二行", settings.QQGroupDescription)
 }
 
 func TestSettingService_UpdateSettings_RejectsOverlongMoneyDisplaySymbol(t *testing.T) {

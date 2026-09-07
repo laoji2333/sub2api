@@ -86,6 +86,13 @@
                   <Icon name="externalLink" size="sm" />
                   {{ t('common.qqGroup.open') }}
                 </a>
+
+                <div
+                  v-if="qqGroupDescription"
+                  class="mt-3 rounded-lg border border-primary-100 bg-primary-50/50 p-3 dark:border-primary-900/50 dark:bg-primary-900/10"
+                >
+                  <div class="whitespace-pre-wrap break-words text-sm font-medium text-gray-700 dark:text-gray-200">{{ qqGroupDescription }}</div>
+                </div>
               </div>
             </div>
           </transition>
@@ -350,6 +357,7 @@ const contactInfo = computed(() => appStore.contactInfo)
 const docUrl = computed(() => sanitizeUrl(appStore.docUrl))
 const qqGroupNumber = computed(() => appStore.cachedPublicSettings?.qq_group_number?.trim() || '')
 const qqGroupJoinUrl = computed(() => sanitizeUrl(appStore.cachedPublicSettings?.qq_group_join_url || ''))
+const qqGroupDescription = computed(() => appStore.cachedPublicSettings?.qq_group_description?.trim() || '')
 const hasQQGroup = computed(() => Boolean(qqGroupNumber.value && qqGroupJoinUrl.value))
 const modelPlazaEnabled = computed(() => isFeatureFlagEnabled(FeatureFlags.modelPlaza))
 const avatarUrl = computed(() => user.value?.avatar_url?.trim() || '')

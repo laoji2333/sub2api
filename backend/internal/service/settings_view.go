@@ -155,6 +155,7 @@ type SystemSettings struct {
 	MoneyDisplaySymbol          string
 	QQGroupNumber               string
 	QQGroupJoinURL              string
+	QQGroupDescription          string
 	APIBaseURL                  string
 	ContactInfo                 string
 	DocURL                      string
@@ -349,6 +350,7 @@ type PublicSettings struct {
 	MoneyDisplaySymbol                  string
 	QQGroupNumber                       string
 	QQGroupJoinURL                      string
+	QQGroupDescription                  string
 	APIBaseURL                          string
 	ContactInfo                         string
 	DocURL                              string

@@ -186,6 +186,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		SettingKeyMoneyDisplaySymbol,
 		SettingKeyQQGroupNumber,
 		SettingKeyQQGroupJoinURL,
+		SettingKeyQQGroupDescription,
 		SettingKeyAPIBaseURL,
 		SettingKeyContactInfo,
 		SettingKeyDocURL,
@@ -330,6 +331,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		MoneyDisplaySymbol:                  s.getStringOrDefault(settings, SettingKeyMoneyDisplaySymbol, "$"),
 		QQGroupNumber:                       strings.TrimSpace(settings[SettingKeyQQGroupNumber]),
 		QQGroupJoinURL:                      strings.TrimSpace(settings[SettingKeyQQGroupJoinURL]),
+		QQGroupDescription:                  strings.TrimSpace(settings[SettingKeyQQGroupDescription]),
 		APIBaseURL:                          settings[SettingKeyAPIBaseURL],
 		ContactInfo:                         settings[SettingKeyContactInfo],
 		DocURL:                              settings[SettingKeyDocURL],
@@ -583,6 +585,7 @@ type PublicSettingsInjectionPayload struct {
 	MoneyDisplaySymbol                  string                   `json:"money_display_symbol"`
 	QQGroupNumber                       string                   `json:"qq_group_number"`
 	QQGroupJoinURL                      string                   `json:"qq_group_join_url"`
+	QQGroupDescription                  string                   `json:"qq_group_description"`
 	APIBaseURL                          string                   `json:"api_base_url"`
 	ContactInfo                         string                   `json:"contact_info"`
 	DocURL                              string                   `json:"doc_url"`
@@ -675,6 +678,7 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		MoneyDisplaySymbol:                  settings.MoneyDisplaySymbol,
 		QQGroupNumber:                       settings.QQGroupNumber,
 		QQGroupJoinURL:                      settings.QQGroupJoinURL,
+		QQGroupDescription:                  settings.QQGroupDescription,
 		APIBaseURL:                          settings.APIBaseURL,
 		ContactInfo:                         settings.ContactInfo,
 		DocURL:                              settings.DocURL,

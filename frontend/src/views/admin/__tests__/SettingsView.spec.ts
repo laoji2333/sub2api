@@ -744,11 +744,13 @@ describe("admin SettingsView payment visible method controls", () => {
       ...baseSettingsResponse,
       qq_group_number: "",
       qq_group_join_url: "",
+      qq_group_description: "",
     });
     updateSettings.mockResolvedValueOnce({
       ...baseSettingsResponse,
       qq_group_number: "123456789",
       qq_group_join_url: "https://qm.qq.com/example",
+      qq_group_description: "第一行\n第二行",
     });
 
     const wrapper = mountView();
@@ -760,6 +762,7 @@ describe("admin SettingsView payment visible method controls", () => {
     const firstPayload = updateSettings.mock.calls[0][0] as Record<string, unknown>;
     expect(firstPayload).not.toHaveProperty("qq_group_number");
     expect(firstPayload).not.toHaveProperty("qq_group_join_url");
+    expect(firstPayload).not.toHaveProperty("qq_group_description");
 
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
@@ -767,6 +770,7 @@ describe("admin SettingsView payment visible method controls", () => {
     const secondPayload = updateSettings.mock.calls[1][0] as Record<string, unknown>;
     expect(secondPayload).not.toHaveProperty("qq_group_number");
     expect(secondPayload).not.toHaveProperty("qq_group_join_url");
+    expect(secondPayload).not.toHaveProperty("qq_group_description");
   });
 
   it("submits empty QQ fields when the user explicitly clears them", async () => {
@@ -774,6 +778,7 @@ describe("admin SettingsView payment visible method controls", () => {
       ...baseSettingsResponse,
       qq_group_number: "123456789",
       qq_group_join_url: "https://qm.qq.com/example",
+      qq_group_description: "第一行\n第二行",
     });
 
     const wrapper = mountView();
@@ -781,6 +786,7 @@ describe("admin SettingsView payment visible method controls", () => {
 
     await wrapper.get('[data-testid="qq-group-number"]').setValue("");
     await wrapper.get('[data-testid="qq-group-join-url"]').setValue("");
+    await wrapper.get('[data-testid="qq-group-description"]').setValue("");
     await wrapper.find("form").trigger("submit.prevent");
     await flushPromises();
 
@@ -788,7 +794,21 @@ describe("admin SettingsView payment visible method controls", () => {
       expect.objectContaining({
         qq_group_number: "",
         qq_group_join_url: "",
+        qq_group_description: "",
       }),
+    );
+  });
+
+  it("preserves line breaks in the QQ group description", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    await wrapper.get('[data-testid="qq-group-description"]').setValue("第一行\n第二行");
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(
+      expect.objectContaining({ qq_group_description: "第一行\n第二行" }),
     );
   });
 

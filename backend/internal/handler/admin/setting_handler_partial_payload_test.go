@@ -19,11 +19,12 @@ import (
 
 func TestUpdateSettingsPartialPayloadKeepsUnsentKeys(t *testing.T) {
 	h, repo := newStepUpSwitchTestHandler(t, map[string]string{
-		service.SettingKeySiteName:         "Example Gateway",
-		service.SettingKeySiteSubtitle:     "Example Gateway Platform",
-		service.SettingKeySMTPHost:         "smtp.example.com",
-		service.SettingKeySMTPFrom:         "noreply@example.com",
-		service.SettingKeyTurnstileEnabled: "true",
+		service.SettingKeySiteName:           "Example Gateway",
+		service.SettingKeySiteSubtitle:       "Example Gateway Platform",
+		service.SettingKeySMTPHost:           "smtp.example.com",
+		service.SettingKeySMTPFrom:           "noreply@example.com",
+		service.SettingKeyTurnstileEnabled:   "true",
+		service.SettingKeyQQGroupDescription: "第一行\n第二行",
 	})
 
 	rec := doUpdateSettings(t, h, map[string]any{"risk_control_enabled": true}, nil)
@@ -37,6 +38,7 @@ func TestUpdateSettingsPartialPayloadKeepsUnsentKeys(t *testing.T) {
 	require.Equal(t, "smtp.example.com", repo.values[service.SettingKeySMTPHost])
 	require.Equal(t, "noreply@example.com", repo.values[service.SettingKeySMTPFrom])
 	require.Equal(t, "true", repo.values[service.SettingKeyTurnstileEnabled])
+	require.Equal(t, "第一行\n第二行", repo.values[service.SettingKeyQQGroupDescription])
 }
 
 // A full payload keeps whole-document semantics: fields explicitly set to their

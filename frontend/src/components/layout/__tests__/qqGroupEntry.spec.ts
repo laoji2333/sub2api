@@ -20,4 +20,14 @@ describe('QQ group entry', () => {
     expect(componentSource).toContain('target="_blank"')
     expect(componentSource).toContain('rel="noopener noreferrer"')
   })
+
+  it('renders the optional multiline description below the join button', () => {
+    const joinButton = componentSource.indexOf("{{ t('common.qqGroup.open') }}")
+    const description = componentSource.indexOf('v-if="qqGroupDescription"')
+
+    expect(joinButton).toBeGreaterThan(-1)
+    expect(description).toBeGreaterThan(joinButton)
+    expect(componentSource).toContain('whitespace-pre-wrap')
+    expect(componentSource).toContain('cachedPublicSettings?.qq_group_description?.trim()')
+  })
 })

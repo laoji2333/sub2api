@@ -394,7 +394,8 @@ describe('useAppStore', () => {
     it('同步公开配置中的 QQ 群信息', async () => {
       vi.mocked(getPublicSettings).mockResolvedValueOnce(createPublicSettings({
         qq_group_number: '123456789',
-        qq_group_join_url: 'https://qm.qq.com/example'
+        qq_group_join_url: 'https://qm.qq.com/example',
+        qq_group_description: '第一行\n第二行'
       }))
       const store = useAppStore()
 
@@ -402,6 +403,7 @@ describe('useAppStore', () => {
 
       expect(store.cachedPublicSettings?.qq_group_number).toBe('123456789')
       expect(store.cachedPublicSettings?.qq_group_join_url).toBe('https://qm.qq.com/example')
+      expect(store.cachedPublicSettings?.qq_group_description).toBe('第一行\n第二行')
     })
 
     it('并发请求失败时所有调用得到 null，且不会标记设置已加载', async () => {

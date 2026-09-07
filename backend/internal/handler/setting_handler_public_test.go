@@ -87,8 +87,9 @@ func TestSettingHandler_GetPublicSettings_ExposesQQGroup(t *testing.T) {
 
 	h := NewSettingHandler(service.NewSettingService(&settingHandlerPublicRepoStub{
 		values: map[string]string{
-			service.SettingKeyQQGroupNumber:  "123456789",
-			service.SettingKeyQQGroupJoinURL: "https://qm.qq.com/example",
+			service.SettingKeyQQGroupNumber:      "123456789",
+			service.SettingKeyQQGroupJoinURL:     "https://qm.qq.com/example",
+			service.SettingKeyQQGroupDescription: "第一行\n第二行",
 		},
 	}, &config.Config{}), "test-version")
 
@@ -103,14 +104,16 @@ func TestSettingHandler_GetPublicSettings_ExposesQQGroup(t *testing.T) {
 	var resp struct {
 		Code int `json:"code"`
 		Data struct {
-			QQGroupNumber  string `json:"qq_group_number"`
-			QQGroupJoinURL string `json:"qq_group_join_url"`
+			QQGroupNumber      string `json:"qq_group_number"`
+			QQGroupJoinURL     string `json:"qq_group_join_url"`
+			QQGroupDescription string `json:"qq_group_description"`
 		} `json:"data"`
 	}
 	require.NoError(t, json.Unmarshal(recorder.Body.Bytes(), &resp))
 	require.Equal(t, 0, resp.Code)
 	require.Equal(t, "123456789", resp.Data.QQGroupNumber)
 	require.Equal(t, "https://qm.qq.com/example", resp.Data.QQGroupJoinURL)
+	require.Equal(t, "第一行\n第二行", resp.Data.QQGroupDescription)
 }
 
 func TestSettingHandler_GetPublicSettings_ExposesTencentCaptchaConfiguration(t *testing.T) {

@@ -615,6 +615,9 @@ export default {
         qqGroupJoinUrl: 'QQ Group Join URL',
         qqGroupJoinUrlHint: 'Only http and https URLs are supported',
         qqGroupJoinUrlPlaceholder: 'https://qm.qq.com/...',
+        qqGroupDescription: 'QQ Group Description',
+        qqGroupDescriptionHint: 'Displayed below the join button. Line breaks are preserved; leave blank to hide it',
+        qqGroupDescriptionPlaceholder: 'Enter the text to display',
         apiBaseUrl: 'API Base URL',
         apiBaseUrlPlaceholder: 'https://api.example.com',
         apiBaseUrlHint:
