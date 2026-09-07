@@ -526,6 +526,7 @@ describe('user KeysView column settings', () => {
     await wrapper.get('[data-test="confirm-ccs-model"]').trigger('click')
 
     expect(openSpy).toHaveBeenCalledWith(expect.stringContaining('model=claude-opus-5'), '_self')
+    await new Promise((resolve) => setTimeout(resolve, 120))
   })
 
   it('keeps the model dialog open and allows retry when loading models fails', async () => {
@@ -585,5 +586,6 @@ describe('user KeysView column settings', () => {
       expect.stringContaining('model=gemini-3.1-pro'),
       '_self'
     )
+    await new Promise((resolve) => setTimeout(resolve, 120))
   })
 })

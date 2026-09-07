@@ -10,6 +10,7 @@ import (
 
 	pkghttputil "github.com/Wei-Shaw/sub2api/internal/pkg/httputil"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/pagination"
+	"github.com/Wei-Shaw/sub2api/internal/pkg/requestmodel"
 	"github.com/Wei-Shaw/sub2api/internal/pkg/response"
 	"github.com/Wei-Shaw/sub2api/internal/server/middleware"
 	"github.com/Wei-Shaw/sub2api/internal/service"
@@ -33,7 +34,7 @@ func rejectPlaygroundImageGeneration(c *gin.Context) {
 		c.Abort()
 		return
 	}
-	resetRequestBody(c, body)
+	requestmodel.ResetRequestBody(c.Request, body)
 
 	model := strings.TrimSpace(gjson.GetBytes(body, "model").String())
 	if service.IsImageGenerationModel(model) || service.IsImageGenerationIntent("/v1/responses", model, body) {
