@@ -330,6 +330,13 @@ describe('EditAccountModal', () => {
 
   afterEach(() => vi.useRealTimers())
 
+  it('shows basic group selection in simple mode', () => {
+    const wrapper = mountModal()
+
+    expect(wrapper.find('[data-testid="group-selector"]').exists()).toBe(true)
+    wrapper.unmount()
+  })
+
   it('sets expiry presets from now instead of extending the saved expiry', async () => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2028-02-29T12:34:00'))

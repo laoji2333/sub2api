@@ -226,6 +226,7 @@ func registerPlaygroundGatewayRoutes(
 	supportsModel playgroundModelSupport,
 	jwtAuth middleware.JWTAuthMiddleware,
 	apiKeyAuth middleware.APIKeyAuthMiddleware,
+	groupModelAllowlist gin.HandlerFunc,
 	apiKeyService *service.APIKeyService,
 	bodyLimit gin.HandlerFunc,
 	clientRequestID gin.HandlerFunc,
@@ -248,6 +249,7 @@ func registerPlaygroundGatewayRoutes(
 	keyedMiddleware := []gin.HandlerFunc{
 		useOwnedPlaygroundAPIKey(apiKeyService),
 		gin.HandlerFunc(apiKeyAuth),
+		groupModelAllowlist,
 		compositeTarget,
 		requireGroup,
 	}

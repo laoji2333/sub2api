@@ -98,6 +98,16 @@ func TestGatewayRoutesGroupModelAllowlistMountedOnEveryGatewayRoute(t *testing.T
 	codexDirect := regexp.MustCompile(regexp.QuoteMeta(`codexDirect.Use(bodyLimit, clientRequestID, opsErrorLogger, endpointNorm, gin.HandlerFunc(apiKeyAuth), groupModelAllowlist, compositeTarget, requireGroupAnthropic)`))
 	require.Regexp(t, codexDirect, source, "codexDirect chain must mount the allowlist after auth and before compositeTarget")
 
+	playgroundRouteSource, err := os.ReadFile("playground.go")
+	require.NoError(t, err)
+	playgroundChain := regexp.MustCompile(
+		regexp.QuoteMeta(`gin.HandlerFunc(apiKeyAuth),`) + `\s*` +
+			regexp.QuoteMeta(`groupModelAllowlist,`) + `\s*` +
+			regexp.QuoteMeta(`compositeTarget,`),
+	)
+	require.Regexp(t, playgroundChain, string(playgroundRouteSource),
+		"playground chain must mount the allowlist after auth and before compositeTarget")
+
 	// 所有带 apiKeyAuth 的根路径路由必须收敛到 rootRoute，避免漏挂。
 	stray := regexp.MustCompile(`\br\.(GET|POST|PUT|PATCH|DELETE)\("[^"]+",[^(]*apiKeyAuth`)
 	require.NotRegexp(t, stray, source,

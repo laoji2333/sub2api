@@ -194,6 +194,7 @@ func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 		func(context.Context, *service.Group, string) bool { return false },
 		servermiddleware.JWTAuthMiddleware(noop),
 		servermiddleware.APIKeyAuthMiddleware(noop),
+		noop,
 		&service.APIKeyService{},
 		noop,
 		noop,

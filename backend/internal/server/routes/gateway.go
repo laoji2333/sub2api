@@ -202,6 +202,7 @@ func RegisterGatewayRoutes(
 		h.Gateway.GroupSupportsModel,
 		jwtAuth,
 		apiKeyAuth,
+		groupModelAllowlist,
 		apiKeyService,
 		bodyLimit,
 		clientRequestID,
