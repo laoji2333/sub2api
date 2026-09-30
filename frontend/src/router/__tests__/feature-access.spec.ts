@@ -26,6 +26,7 @@ const appStore = vi.hoisted(() => ({
     payment_enabled?: boolean
     risk_control_enabled?: boolean
     subscription_enabled?: boolean
+    image_playground_enabled?: boolean
     custom_menu_items?: []
   },
   fetchPublicSettings: vi.fn(),
@@ -208,5 +209,64 @@ describe('subscription route guard (opt-out flag)', () => {
     await navigation
 
     expect(next).toHaveBeenCalledWith('/admin/dashboard')
+  })
+})
+
+describe('image playground route guard (opt-in flag)', () => {
+  beforeEach(() => {
+    authStore.isAdmin = false
+    appStore.publicSettingsLoaded = true
+    appStore.fetchPublicSettings.mockReset()
+  })
+
+  it.each([
+    ['missing setting', {}],
+    ['explicitly disabled', { image_playground_enabled: false }],
+  ])('redirects direct access when %s', async (_name, settings) => {
+    appStore.cachedPublicSettings = settings
+
+    const { navigation, next } = runGuard({}, '/image-playground')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith('/dashboard')
+  })
+
+  it('allows direct access when enabled', async () => {
+    appStore.cachedPublicSettings = { image_playground_enabled: true }
+
+    const { navigation, next } = runGuard({}, '/image-playground')
+    await navigation
+
+    expect(next).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith()
+  })
+
+  it('fetches settings before deciding and redirects admins to their dashboard', async () => {
+    authStore.isAdmin = true
+    appStore.publicSettingsLoaded = false
+    appStore.cachedPublicSettings = null
+    appStore.fetchPublicSettings.mockImplementation(async () => {
+      appStore.cachedPublicSettings = { image_playground_enabled: false }
+      appStore.publicSettingsLoaded = true
+      return appStore.cachedPublicSettings
+    })
+
+    const { navigation, next } = runGuard({}, '/image-playground')
+    await navigation
+
+    expect(appStore.fetchPublicSettings).toHaveBeenCalledOnce()
+    expect(next).toHaveBeenCalledWith('/admin/dashboard')
+  })
+
+  it('keeps the page closed when settings cannot be loaded', async () => {
+    appStore.publicSettingsLoaded = false
+    appStore.cachedPublicSettings = null
+    appStore.fetchPublicSettings.mockResolvedValue(null)
+
+    const { navigation, next } = runGuard({}, '/image-playground')
+    await navigation
+
+    expect(next).toHaveBeenCalledWith('/dashboard')
   })
 })

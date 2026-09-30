@@ -104,6 +104,11 @@ export const FeatureFlags = {
     mode: 'opt-in',
     label: 'Available Channels',
   }),
+  imagePlayground: defineFlag({
+    key: 'image_playground_enabled',
+    mode: 'opt-in',
+    label: 'Online Image Generation',
+  }),
   subscription: defineFlag({
     key: 'subscription_enabled',
     mode: 'opt-out',

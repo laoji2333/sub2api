@@ -3,6 +3,8 @@ package server
 import (
 	"context"
 	"log"
+	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -42,6 +44,7 @@ func SetupRouter(
 	var cachedFrameOrigins atomic.Pointer[[]string]
 	emptyOrigins := []string{}
 	cachedFrameOrigins.Store(&emptyOrigins)
+	var imagePlaygroundEnabled atomic.Bool
 
 	refreshFrameOrigins := func() {
 		ctx, cancel := context.WithTimeout(context.Background(), frameSrcRefreshTimeout)
@@ -54,6 +57,16 @@ func SetupRouter(
 		cachedFrameOrigins.Store(&origins)
 	}
 	refreshFrameOrigins() // 启动时初始化
+	refreshImagePlaygroundEnabled := func() {
+		ctx, cancel := context.WithTimeout(context.Background(), frameSrcRefreshTimeout)
+		defer cancel()
+		imagePlaygroundEnabled.Store(settingService.IsImagePlaygroundEnabled(ctx))
+	}
+	refreshImagePlaygroundEnabled()
+	refreshPublicRuntime := func() {
+		refreshFrameOrigins()
+		refreshImagePlaygroundEnabled()
+	}
 
 	// 应用中间件
 	r.Use(middleware2.RequestLogger())
@@ -69,6 +82,7 @@ func SetupRouter(
 		return nil
 	}))
 	r.Use(middleware2.ServerTiming(cfg.Server.EnableServerTiming))
+	r.Use(imagePlaygroundAppGuard(imagePlaygroundEnabled.Load))
 
 	// Serve embedded frontend with settings injection if available
 	if web.HasEmbeddedFrontend() {
@@ -76,23 +90,39 @@ func SetupRouter(
 		if err != nil {                                              //nolint:staticcheck // SA4023: see above
 			log.Printf("Warning: Failed to create frontend server with settings injection: %v, using legacy mode", err)
 			r.Use(web.ServeEmbeddedFrontend())
-			settingService.SetOnUpdateCallback(refreshFrameOrigins)
+			settingService.SetOnUpdateCallback(refreshPublicRuntime)
 		} else {
 			// Register combined callback: invalidate HTML cache + refresh frame origins
 			settingService.SetOnUpdateCallback(func() {
 				frontendServer.InvalidateCache()
-				refreshFrameOrigins()
+				refreshPublicRuntime()
 			})
 			r.Use(frontendServer.Middleware())
 		}
 	} else {
-		settingService.SetOnUpdateCallback(refreshFrameOrigins)
+		settingService.SetOnUpdateCallback(refreshPublicRuntime)
 	}
 
 	// 注册路由
 	registerRoutes(r, handlers, jwtAuth, optionalJWTAuth, adminAuth, apiKeyAuth, auditLog, stepUpAuth, apiKeyService, subscriptionService, opsService, settingService, compositeResolver, cfg, redisClient)
 
 	return r
+}
+
+func imagePlaygroundAppGuard(isEnabled func() bool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+		if path != "/image-playground-app" && !strings.HasPrefix(path, "/image-playground-app/") {
+			c.Next()
+			return
+		}
+		if !isEnabled() {
+			c.Header("Cache-Control", "no-store")
+			c.AbortWithStatus(http.StatusNotFound)
+			return
+		}
+		c.Next()
+	}
 }
 
 // registerRoutes 注册所有 HTTP 路由

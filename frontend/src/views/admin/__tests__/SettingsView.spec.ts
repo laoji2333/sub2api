@@ -390,6 +390,7 @@ const baseSettingsResponse = {
   home_content: "",
   compact_home_enabled: false,
   hide_ccs_import_button: false,
+  image_playground_enabled: false,
   table_default_page_size: 20,
   table_page_size_options: [10, 20, 50, 100],
   backend_mode_enabled: false,
@@ -763,6 +764,22 @@ describe("admin SettingsView payment visible method controls", () => {
     expect(updateSettings).toHaveBeenCalledWith(
       expect.objectContaining({ compact_home_enabled: true }),
     );
+  });
+
+  it("places the online image generation toggle below CCS import and saves its opt-in value", async () => {
+    const wrapper = mountView();
+    await flushPromises();
+
+    const ccsToggle = wrapper.get('[data-testid="hide-ccs-import-toggle"]');
+    const imageToggle = wrapper.get('[data-testid="image-playground-toggle"]');
+    expect((imageToggle.element as HTMLInputElement).checked).toBe(false);
+    expect(ccsToggle.element.compareDocumentPosition(imageToggle.element) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await imageToggle.setValue(true);
+    await wrapper.find("form").trigger("submit.prevent");
+    await flushPromises();
+
+    expect(updateSettings).toHaveBeenCalledWith(expect.objectContaining({ image_playground_enabled: true }));
   });
 
   it("omits unchanged QQ fields when saving unrelated settings", async () => {

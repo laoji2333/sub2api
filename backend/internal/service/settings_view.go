@@ -162,6 +162,7 @@ type SystemSettings struct {
 	HomeContent                 string
 	CompactHomeEnabled          bool
 	HideCcsImportButton         bool
+	ImagePlaygroundEnabled      bool
 	PurchaseSubscriptionEnabled bool
 	PurchaseSubscriptionURL     string
 	TableDefaultPageSize        int
@@ -368,6 +369,7 @@ type PublicSettings struct {
 	HomeContent                         string
 	CompactHomeEnabled                  bool
 	HideCcsImportButton                 bool
+	ImagePlaygroundEnabled              bool
 
 	PurchaseSubscriptionEnabled bool
 	PurchaseSubscriptionURL     string

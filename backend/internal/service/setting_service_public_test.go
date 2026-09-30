@@ -4,6 +4,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/Wei-Shaw/sub2api/internal/config"
@@ -99,6 +100,43 @@ func TestSettingService_GetPublicSettings_ExposesCompactHomeEnabled(t *testing.T
 		GetPublicSettings(context.Background())
 	require.NoError(t, err)
 	require.False(t, missingSettings.CompactHomeEnabled)
+}
+
+func TestSettingService_GetPublicSettings_ImagePlaygroundDefaultsOffAndInjectsEnabledValue(t *testing.T) {
+	missing := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{})
+	defaults, err := missing.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, defaults.ImagePlaygroundEnabled)
+
+	enabled := NewSettingService(&settingPublicRepoStub{values: map[string]string{
+		SettingKeyImagePlaygroundEnabled: "true",
+	}}, &config.Config{})
+	public, err := enabled.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, public.ImagePlaygroundEnabled)
+
+	raw, err := enabled.GetPublicSettingsForInjection(context.Background())
+	require.NoError(t, err)
+	require.True(t, raw.(*PublicSettingsInjectionPayload).ImagePlaygroundEnabled)
+}
+
+func TestSettingService_IsImagePlaygroundEnabled(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		values map[string]string
+		err    error
+		want   bool
+	}{
+		{name: "missing setting", values: map[string]string{}},
+		{name: "disabled", values: map[string]string{SettingKeyImagePlaygroundEnabled: "false"}},
+		{name: "enabled", values: map[string]string{SettingKeyImagePlaygroundEnabled: "true"}, want: true},
+		{name: "read failure", err: errors.New("unavailable")},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			svc := NewSettingService(&settingPublicRepoStub{values: tc.values, err: tc.err}, &config.Config{})
+			require.Equal(t, tc.want, svc.IsImagePlaygroundEnabled(context.Background()))
+		})
+	}
 }
 
 func TestSettingService_GetPublicSettings_ExposesMoneyDisplaySymbol(t *testing.T) {

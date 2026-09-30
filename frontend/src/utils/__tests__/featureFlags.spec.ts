@@ -40,6 +40,14 @@ describe('FeatureFlags.subscription', () => {
   })
 })
 
+describe('FeatureFlags.imagePlayground', () => {
+  it('defaults off and follows the public setting', () => {
+    expect(resolveFeatureFlag(null, FeatureFlags.imagePlayground)).toBe(false)
+    expect(resolveFeatureFlag({ image_playground_enabled: false }, FeatureFlags.imagePlayground)).toBe(false)
+    expect(resolveFeatureFlag({ image_playground_enabled: true }, FeatureFlags.imagePlayground)).toBe(true)
+  })
+})
+
 describe('resolveFeatureFlag', () => {
   beforeEach(() => {
     setActivePinia(createPinia())

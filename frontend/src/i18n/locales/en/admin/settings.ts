@@ -700,7 +700,9 @@ export default {
         compactHome: 'Compact Home Page',
         compactHomeHint: 'Show a restrained site identity page when no custom home page content is set.',
         hideCcsImportButton: 'Hide CCS Import Button',
-        hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page'
+        hideCcsImportButtonHint: 'When enabled, the "Import to CCS" button will be hidden on the API Keys page',
+        imagePlaygroundEnabled: 'Online Image Generation',
+        imagePlaygroundEnabledHint: 'Show the sidebar entry and allow access to both image generation pages when enabled; block both when disabled.'
       },
       purchase: {
         title: 'Recharge / Subscription Page',

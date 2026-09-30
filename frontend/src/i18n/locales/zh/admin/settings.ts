@@ -695,7 +695,9 @@ export default {
         compactHome: '简洁首页',
         compactHomeHint: '未设置自定义首页内容时，展示简洁的站点信息页面。',
         hideCcsImportButton: '隐藏 CCS 导入按钮',
-        hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮'
+        hideCcsImportButtonHint: '启用后将在 API Keys 页面隐藏"导入 CCS"按钮',
+        imagePlaygroundEnabled: '在线生图',
+        imagePlaygroundEnabledHint: '开启后显示左侧入口，并允许访问在线生图页面及独立生图页面；关闭后均不可访问。'
       },
       purchase: {
         title: '充值/订阅页面',

@@ -93,3 +93,10 @@ describe('AppSidebar subscription feature flag', () => {
     expect(componentSource).toMatch(/path: '\/purchase'[^\n]*label: purchaseNavLabel\.value/)
   })
 })
+
+describe('AppSidebar online image generation', () => {
+  it('uses the public setting for the shared user navigation entry', () => {
+    expect(componentSource).toContain('const flagImagePlayground = makeSidebarFlag(FeatureFlags.imagePlayground)')
+    expect(componentSource).toMatch(/path: '\/image-playground'[^\n]*featureFlag: flagImagePlayground/)
+  })
+})
