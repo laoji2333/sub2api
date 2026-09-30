@@ -26,6 +26,19 @@
                 class="w-full"
               />
             </label>
+            <label class="block min-w-0 flex-1 lg:w-72 lg:flex-none">
+              <span class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-dark-200">
+                {{ t('imagePlayground.modelLabel') }}
+              </span>
+              <Select
+                v-model="selectedModel"
+                :options="modelOptions"
+                :disabled="loadingModels || modelOptions.length === 0"
+                :placeholder="loadingModels ? t('imagePlayground.loadingModels') : t('imagePlayground.selectModel')"
+                :aria-label="t('imagePlayground.modelLabel')"
+                class="w-full"
+              />
+            </label>
             <button
               type="button"
               class="btn btn-secondary min-h-11 w-full justify-center sm:w-auto"
@@ -37,6 +50,13 @@
             </button>
           </div>
         </div>
+        <p v-if="modelLoadError" class="mt-2 text-sm text-red-600 dark:text-red-400">
+          {{ t('imagePlayground.loadModelsFailed') }}：{{ modelLoadError }}
+          <button type="button" class="ml-2 underline" @click="loadModels(selectedKeyID)">{{ t('imagePlayground.retry') }}</button>
+        </p>
+        <p v-else-if="selectedKeyID && !loadingModels && modelOptions.length === 0" class="mt-2 text-sm text-amber-600 dark:text-amber-400">
+          {{ t('imagePlayground.noModels') }}
+        </p>
       </section>
 
       <section class="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-dark-700 dark:bg-dark-900">
@@ -98,7 +118,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { ImagePlaygroundAPIKeyOption } from '@/api/playground'
-import { listImagePlaygroundAPIKeys } from '@/api/playground'
+import { listImagePlaygroundAPIKeys, listImagePlaygroundModels } from '@/api/playground'
 import Select from '@/components/common/Select.vue'
 import Icon from '@/components/icons/Icon.vue'
 import AppLayout from '@/components/layout/AppLayout.vue'
@@ -108,23 +128,29 @@ const { t } = useI18n()
 const SELECTED_KEY_STORAGE_KEY = 'image-playground-selected-key-id'
 const apiKeys = ref<ImagePlaygroundAPIKeyOption[]>([])
 const selectedKeyID = ref<number | null>(null)
+const models = ref<string[]>([])
+const selectedModel = ref<string | null>(null)
 const loadingKeys = ref(true)
+const loadingModels = ref(false)
 const loadError = ref('')
+const modelLoadError = ref('')
+let modelRequestGeneration = 0
 
 const keyOptions = computed(() => apiKeys.value.map((key) => ({
   value: key.id,
   label: `${key.name} · ${key.group_name}`
 })))
+const modelOptions = computed(() => models.value.map((model) => ({ value: model, label: model })))
 
 const playgroundUrl = computed(() => {
   const key = apiKeys.value.find((item) => item.id === selectedKeyID.value)
-  if (!key) return ''
+  if (!key || !selectedModel.value) return ''
 
   const url = new URL('/image-playground-app/', window.location.origin)
   url.searchParams.set('apiUrl', `${window.location.origin}/v1`)
   url.searchParams.set('apiKey', key.key)
   url.searchParams.set('apiMode', 'images')
-  url.searchParams.set('model', 'gpt-image-2')
+  url.searchParams.set('model', selectedModel.value)
   url.searchParams.set('profileName', `${key.name} · ${key.group_name}`)
   url.searchParams.set('transparentBackgroundMethod', 'prompt')
   return url.toString()
@@ -134,13 +160,37 @@ watch(selectedKeyID, (value) => {
   try {
     if (value === null) {
       localStorage.removeItem(SELECTED_KEY_STORAGE_KEY)
-      return
+    } else {
+      localStorage.setItem(SELECTED_KEY_STORAGE_KEY, String(value))
     }
-    localStorage.setItem(SELECTED_KEY_STORAGE_KEY, String(value))
   } catch {
     // 浏览器禁用存储时保持当前会话可用
   }
+  void loadModels(value)
 })
+
+async function loadModels(apiKeyID: number | null) {
+  const generation = ++modelRequestGeneration
+  models.value = []
+  selectedModel.value = null
+  modelLoadError.value = ''
+  loadingModels.value = false
+  const key = apiKeys.value.find((item) => item.id === apiKeyID)
+  if (!key) return
+
+  loadingModels.value = true
+  try {
+    const nextModels = await listImagePlaygroundModels(key.key)
+    if (generation !== modelRequestGeneration) return
+    models.value = nextModels
+    selectedModel.value = nextModels[0] ?? null
+  } catch (err) {
+    if (generation !== modelRequestGeneration) return
+    modelLoadError.value = err instanceof Error ? err.message : String(err)
+  } finally {
+    if (generation === modelRequestGeneration) loadingModels.value = false
+  }
+}
 
 async function loadAPIKeys() {
   loadingKeys.value = true

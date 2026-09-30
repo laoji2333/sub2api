@@ -50,6 +50,22 @@ export async function listImagePlaygroundAPIKeys(): Promise<ImagePlaygroundAPIKe
   return Array.isArray(data) ? data : []
 }
 
+export async function listImagePlaygroundModels(apiKey: string): Promise<string[]> {
+  const response = await fetch('/v1/models', {
+    headers: { Authorization: `Bearer ${apiKey}` },
+    cache: 'no-store'
+  })
+  if (!response.ok) throw new Error(await readPlaygroundError(response))
+
+  const payload = await response.json() as { data?: Array<Record<string, unknown>> }
+  const seen = new Set<string>()
+  for (const item of payload.data ?? []) {
+    const value = String(item.id ?? item.model ?? '').trim()
+    if (value) seen.add(value)
+  }
+  return [...seen]
+}
+
 export async function listPlaygroundModels(apiKeyID: number): Promise<string[]> {
   const { data } = await apiClient.get<{ data?: Array<Record<string, unknown>> }>('/user/playground/models', {
     headers: { [PLAYGROUND_API_KEY_HEADER]: String(apiKeyID) }
