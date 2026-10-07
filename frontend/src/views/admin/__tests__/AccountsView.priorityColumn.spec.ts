@@ -26,6 +26,8 @@ vi.mock('@/api/admin', () => ({
   }
 }))
 
+vi.mock('@/api/admin/accounts', () => ({ update: updateAccount }))
+
 vi.mock('@/stores/app', () => ({
   useAppStore: () => ({ showError: vi.fn(), showSuccess: vi.fn(), showInfo: vi.fn() })
 }))
