@@ -108,8 +108,6 @@ export default {
       stickySessionTTLHours: '{count}h',
       stickySessionTTLNoExpiry: 'No expiry',
       searchAccounts: 'Search accounts...',
-      moreFilters: 'More filters',
-      moreFiltersActive: 'More filters ({count} active)',
       notes: 'Notes',
       notesPlaceholder: 'Enter notes',
       notesHint: 'Notes are optional',

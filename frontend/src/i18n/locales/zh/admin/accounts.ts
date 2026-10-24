@@ -107,8 +107,6 @@ export default {
       stickySessionTTLHours: '{count} 小时',
       stickySessionTTLNoExpiry: '无过期时间',
       searchAccounts: '搜索账号...',
-      moreFilters: '更多筛选',
-      moreFiltersActive: '更多筛选（已启用 {count} 项）',
       notes: '备注',
       notesPlaceholder: '请输入备注',
       notesHint: '备注可选',
