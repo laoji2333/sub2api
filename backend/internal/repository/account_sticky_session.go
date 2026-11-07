@@ -93,7 +93,7 @@ LIMIT $3`, accountID, since, stickySessionMetadataLimit)
 	if err != nil {
 		return nil, fmt.Errorf("query sticky session usage metadata: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	items := make([]stickySessionUsageMetadata, 0)
 	for rows.Next() {
@@ -137,7 +137,7 @@ func (r *sqlAccountStickySessionMetadataReader) LoadGroupNames(ctx context.Conte
 	if err != nil {
 		return nil, fmt.Errorf("query sticky session groups: %w", err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var groupID int64
