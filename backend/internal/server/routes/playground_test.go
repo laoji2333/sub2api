@@ -195,6 +195,7 @@ func TestRegisterPlaygroundGatewayRoutesUsesResponsesEndpoint(t *testing.T) {
 		servermiddleware.JWTAuthMiddleware(noop),
 		servermiddleware.APIKeyAuthMiddleware(noop),
 		noop,
+		servermiddleware.RejectConflictingRequestFields(),
 		&service.APIKeyService{},
 		noop,
 		noop,
